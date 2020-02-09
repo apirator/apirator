@@ -16,7 +16,7 @@ const (
 	svcPortName = "mock-svc-port"
 )
 
-func (r *ReconcileAPIMock) service(mock *v1alpha1.APIMock) error {
+func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
 	svcPresent := mock.Spec.Port != 0
 	if svcPresent {
 		svcK8s := &v1.Service{}
@@ -25,6 +25,7 @@ func (r *ReconcileAPIMock) service(mock *v1alpha1.APIMock) error {
 			Namespace: mock.Namespace,
 		}, svcK8s)
 		if err != nil && errors.IsNotFound(err) {
+			log.Info("Service not found. Starting creation...", "Service.Namespace", mock.Namespace, "Service.Name", mock.Name)
 			svcPort := v1.ServicePort{
 				Name:       svcPortName,
 				Protocol:   "http",
@@ -47,16 +48,18 @@ func (r *ReconcileAPIMock) service(mock *v1alpha1.APIMock) error {
 				},
 			}
 			owner.AddOwnerRefToObject(svc, owner.AsOwner(&mock.ObjectMeta))
-			err:= r.client.Create(context.TODO(),svc)
-			if err != nil{
+			err := r.client.Create(context.TODO(), svc)
+			if err != nil {
 				log.Error(err, "Failed to create new Service", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
 				return err
 			}
+			log.Info("Service created successfully", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
+			return nil
 		} else if err != nil {
 			log.Error(err, "Failed to get Service")
 			return err
 		}
-	}else {
+	} else {
 		log.Info("Service is not necessary")
 	}
 	return nil

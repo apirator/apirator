@@ -14,13 +14,14 @@ import (
 
 const yamlConfigPath = "/etc/oas"
 
-func (r *ReconcileAPIMock) configmap(mock *v1alpha1.APIMock) error {
+func (r *ReconcileAPIMock) EnsureConfigMap(mock *v1alpha1.APIMock) error {
 	cMap := &v1.ConfigMap{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{
 		Name:      mock.GetName(),
 		Namespace: mock.Namespace,
 	}, cMap)
 	if err != nil && errors.IsNotFound(err) {
+		log.Info("ConfigMap not found. Starting creation...", "ConfigMap.Namespace", mock.Namespace, "ConfigMap.Name", mock.Name)
 		cm := &v1.ConfigMap{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ConfigMap",
@@ -39,6 +40,8 @@ func (r *ReconcileAPIMock) configmap(mock *v1alpha1.APIMock) error {
 			log.Error(err, "Failed to create new ConfigMap", "ConfigMap.Namespace", cm.Namespace, "ConfigMap.Name", cm.Name)
 			return err
 		}
+		log.Info("ConfigMap created successfully", "ConfigMap.Namespace", cm.Namespace, "ConfigMap.Name", cm.Name)
+		return nil
 	} else if err != nil {
 		log.Error(err, "Failed to get ConfigMap")
 		return err

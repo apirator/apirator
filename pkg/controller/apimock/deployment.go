@@ -12,17 +12,18 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func (r *ReconcileAPIMock) deployment(mock *v1alpha1.APIMock) error {
+func (r *ReconcileAPIMock) EnsureDeployment(mock *v1alpha1.APIMock) error {
 	svcK8s := &v1.Deployment{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{
 		Name:      mock.GetName(),
 		Namespace: mock.Namespace,
 	}, svcK8s)
 	if err != nil && errors.IsNotFound(err) {
+		log.Info("Deployment not found. Starting creation...", "Deployment.Namespace", mock.Namespace, "Deployment.Name", mock.Name)
 		var reps int32
 		reps = int32(1)
 		pt := BuildPodTemplate(mock)
-		d := v1.Deployment{
+		d := &v1.Deployment{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Deployment",
 				APIVersion: "apps/v1",
@@ -52,6 +53,8 @@ func (r *ReconcileAPIMock) deployment(mock *v1alpha1.APIMock) error {
 			log.Error(err, "Failed to create Deployment")
 			return err
 		}
+		log.Info("Deployment created successfully", "Deployment.Namespace", d.Namespace, "Deployment.Name", d.Name)
+		return nil
 	} else if err != nil {
 		log.Error(err, "Failed to get Deployment")
 		return err
