@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	svcPortName = "mock-svc-port"
+	svcPortName = "http"
 )
 
 func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
@@ -28,7 +28,7 @@ func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
 			log.Info("Service not found. Starting creation...", "Service.Namespace", mock.Namespace, "Service.Name", mock.Name)
 			svcPort := v1.ServicePort{
 				Name:       svcPortName,
-				Protocol:   "http",
+				Protocol:   "tcp",
 				Port:       int32(mock.Spec.Port),
 				TargetPort: intstr.FromInt(mock.Spec.ContainerPort),
 			}

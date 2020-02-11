@@ -15,8 +15,7 @@ spec:
       serviceAccountName: apirator
       containers:
         - name: apirator
-          # Replace this with the built image name
-          image: REPLACE_IMAGE
+          image: apirator/apirator
           command:
           - apirator
           imagePullPolicy: Always
