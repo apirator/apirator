@@ -113,8 +113,6 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	}
 
-	// Pod already exists - don't requeue
-	reqLogger.Info("Skip reconcile: Pod already exists", "Pod.Namespace", found.Namespace, "Pod.Name", found.Name)
 	return reconcile.Result{}, nil
 }
 
