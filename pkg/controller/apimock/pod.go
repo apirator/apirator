@@ -4,6 +4,7 @@ import (
 	"github.com/apirator/apirator/pkg/apis/apirator/v1alpha1"
 	"github.com/apirator/apirator/pkg/controller/k8s/util/labels"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"path/filepath"
 )
@@ -52,6 +53,20 @@ func mockContainer(mock *v1alpha1.APIMock) v1.Container {
 		})
 	}
 
+	// Configure Requests
+	requests := v1.ResourceList{}
+	requests[v1.ResourceCPU] = resource.MustParse("10m")
+	requests[v1.ResourceMemory] = resource.MustParse("5Mi")
+
+	// Configure Limits
+	limits := v1.ResourceList{}
+	limits[v1.ResourceCPU] = resource.MustParse("20m")
+	limits[v1.ResourceMemory] = resource.MustParse("10Mi")
+
+	requirements := v1.ResourceRequirements{
+		Limits:   limits,
+		Requests: requests,
+	}
 	return v1.Container{
 		Name:    mock.GetName(),
 		Image:   mockImageName,
@@ -61,6 +76,7 @@ func mockContainer(mock *v1alpha1.APIMock) v1.Container {
 		},
 		VolumeMounts: vm,
 		Ports:        ports,
+		Resources:    requirements,
 	}
 
 }
