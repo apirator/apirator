@@ -43,7 +43,7 @@ func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
 				},
 				Spec: v1.ServiceSpec{
 					Selector: labels.LabelForAPIMock(mock),
-					Type:     v1.ServiceTypeLoadBalancer,
+					Type:     v1.ServiceTypeClusterIP,
 					Ports:    []v1.ServicePort{svcPort},
 				},
 			}
