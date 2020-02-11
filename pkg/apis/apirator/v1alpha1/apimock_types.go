@@ -20,7 +20,7 @@ type APIMockSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 	Definition    string `json:"definition,omitempty"`
-	Port          int    `port:"definition,omitempty"`
+	Port          int    `json:"port,omitempty"`
 	ContainerPort int    `json:"containerPort,omitempty"`
 }
 
