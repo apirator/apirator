@@ -73,17 +73,27 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	cfmErr := r.EnsureConfigMap(instance)
 	if cfmErr != nil {
-
+		if err := r.markAsFailure(instance); err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 
 	depErr := r.EnsureDeployment(instance)
 	if depErr != nil {
-
+		if err := r.markAsFailure(instance); err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 
 	svcErr := r.EnsureService(instance)
 	if svcErr != nil {
+		if err := r.markAsFailure(instance); err != nil {
+			return reconcile.Result{}, err
+		}
+	}
 
+	if err := r.markAsSuccessful(instance); err != nil {
+		return reconcile.Result{}, err
 	}
 
 	return reconcile.Result{}, nil
