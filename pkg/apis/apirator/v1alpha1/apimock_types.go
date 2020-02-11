@@ -7,14 +7,21 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+const (
+	PROVISIONED = "PROVISIONED"
+	ERROR       = "ERROR"
+)
+
 // APIMockSpec defines the desired state of APIMock
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".status.phase",name=Status,type=string
 type APIMockSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-	Definition string `json:"definition,omitempty"`
-	Port int `port:"definition,omitempty"`
-	ContainerPort int `json:"containerPort,omitempty"`
+	Definition    string `json:"definition,omitempty"`
+	Port          int    `port:"definition,omitempty"`
+	ContainerPort int    `json:"containerPort,omitempty"`
 }
 
 // APIMockStatus defines the observed state of APIMock
@@ -22,6 +29,7 @@ type APIMockStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+	// +kubebuilder:validation:Enum=PROVISIONED;ERROR;
 	Phase string `json:"phase,omitempty"`
 }
 

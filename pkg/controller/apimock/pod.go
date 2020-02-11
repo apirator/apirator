@@ -11,8 +11,8 @@ import (
 const (
 	mockVolumeMountName = "oas"
 	mockVolumeMountPath = "/etc/oas"
-	mockPortName = "mock-port"
-	mockImageName =  "danielgtaylor/apisprout"
+	mockPortName        = "mock-port"
+	mockImageName       = "danielgtaylor/apisprout"
 )
 
 func BuildPodTemplate(mock *v1alpha1.APIMock) v1.PodTemplateSpec {
@@ -25,7 +25,7 @@ func BuildPodTemplate(mock *v1alpha1.APIMock) v1.PodTemplateSpec {
 				},
 			},
 		},
-	},}
+	}}
 	return v1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      mock.GetName(),
@@ -33,8 +33,8 @@ func BuildPodTemplate(mock *v1alpha1.APIMock) v1.PodTemplateSpec {
 			Labels:    labels.LabelForAPIMock(mock),
 		},
 		Spec: v1.PodSpec{
-			Containers:     []v1.Container{mockContainer(mock)},
-			Volumes:        volumes,
+			Containers: []v1.Container{mockContainer(mock)},
+			Volumes:    volumes,
 		},
 	}
 }
@@ -55,9 +55,9 @@ func mockContainer(mock *v1alpha1.APIMock) v1.Container {
 	return v1.Container{
 		Name:    mock.GetName(),
 		Image:   mockImageName,
-		Command: []string{"apiyamlpath"},
+		Command: []string{"apisprout"},
 		Args: []string{
-			mockVolumeMountPath,
+			mockVolumeMountPath + "/" + "oas.yaml",
 		},
 		VolumeMounts: vm,
 		Ports:        ports,

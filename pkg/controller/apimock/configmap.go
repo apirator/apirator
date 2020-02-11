@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 )
 
-const yamlConfigPath = "/etc/oas"
+const yamlConfigPath = "/etc/oas/oas.yaml"
 
 func (r *ReconcileAPIMock) EnsureConfigMap(mock *v1alpha1.APIMock) error {
 	cMap := &v1.ConfigMap{}
