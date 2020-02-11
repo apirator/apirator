@@ -11,7 +11,7 @@ import (
 
 const (
 	mockVolumeMountName = "oas"
-	mockVolumeMountPath = "/oas"
+	mockVolumeMountPath = "/etc/oas/"
 	mockPortName        = "mock-port"
 	mockImageName       = "danielgtaylor/apisprout"
 )
