@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -19,9 +20,9 @@ type APIMockSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-	Definition    string `json:"definition,omitempty"`
-	Port          int    `json:"port,omitempty"`
-	ContainerPort int    `json:"containerPort,omitempty"`
+	Definition        string            `json:"definition,omitempty"`
+	ServiceDefinition ServiceDefinition `json:"serviceDefinition,omitempty"`
+	ContainerPort     int               `json:"containerPort,omitempty"`
 }
 
 // APIMockStatus defines the observed state of APIMock
@@ -31,6 +32,11 @@ type APIMockStatus struct {
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 	// +kubebuilder:validation:Enum=PROVISIONED;ERROR;
 	Phase string `json:"phase,omitempty"`
+}
+
+type ServiceDefinition struct {
+	Port        int            `json:"port,omitempty"`
+	ServiceType v1.ServiceType `json:"serviceType,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

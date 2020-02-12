@@ -17,7 +17,7 @@ const (
 )
 
 func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
-	svcPresent := mock.Spec.Port != 0
+	svcPresent := mock.Spec.ServiceDefinition.Port != 0
 	if svcPresent {
 		svcK8s := &v1.Service{}
 		err := r.client.Get(context.TODO(), types.NamespacedName{
@@ -29,7 +29,7 @@ func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
 			svcPort := v1.ServicePort{
 				Name:       svcPortName,
 				Protocol:   "TCP",
-				Port:       int32(mock.Spec.Port),
+				Port:       int32(mock.Spec.ServiceDefinition.Port),
 				TargetPort: intstr.FromInt(mock.Spec.ContainerPort),
 			}
 			svc := &v1.Service{
@@ -43,7 +43,7 @@ func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
 				},
 				Spec: v1.ServiceSpec{
 					Selector: labels.LabelForAPIMock(mock),
-					Type:     v1.ServiceTypeClusterIP,
+					Type:     mock.Spec.ServiceDefinition.ServiceType,
 					Ports:    []v1.ServicePort{svcPort},
 				},
 			}
