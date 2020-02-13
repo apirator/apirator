@@ -3,6 +3,7 @@ module github.com/apirator/apirator
 go 1.13
 
 require (
+	github.com/google/addlicense v0.0.0-20200109101052-9fa18aaf59fb // indirect
 	github.com/operator-framework/operator-sdk v0.15.1
 	github.com/spf13/pflag v1.0.5
 	k8s.io/api v0.0.0
