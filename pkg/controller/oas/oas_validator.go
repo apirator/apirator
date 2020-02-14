@@ -9,12 +9,7 @@ import (
 
 func Validate(definition string) error {
 	doc := &openapi3.Swagger{}
-	data, errYaml := yaml.Marshal(definition)
-	if errYaml != nil {
-		log.Log.Error(errYaml, "Error to parse definition to yaml")
-		return errYaml
-	}
-	err := yaml.Unmarshal(data, doc)
+	err := yaml.Unmarshal([]byte(definition), doc)
 	if err != nil {
 		log.Log.Error(err, "Error to parse yaml to oas")
 	}
