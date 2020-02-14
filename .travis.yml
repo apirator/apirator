@@ -1,7 +1,5 @@
 dist: trusty
 
-language: go
-
 jobs:
   include:
   - stage: build docker image
