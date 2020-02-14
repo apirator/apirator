@@ -11,6 +11,7 @@ import (
 const (
 	PROVISIONED = "PROVISIONED"
 	ERROR       = "ERROR"
+	INVALID_OAS = "INVALID_OAS"
 )
 
 // APIMockSpec defines the desired state of APIMock

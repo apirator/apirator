@@ -14,6 +14,10 @@ func (r *ReconcileAPIMock) markAsFailure(obj *apirator.APIMock) error {
 	return r.updateStatus(obj, apirator.ERROR)
 }
 
+func (r *ReconcileAPIMock) markAsInvalidOAS(obj *apirator.APIMock) error {
+	return r.updateStatus(obj, apirator.INVALID_OAS)
+}
+
 func (r *ReconcileAPIMock) updateStatus(obj *apirator.APIMock, status string) error {
 	if obj.Status.Phase != status {
 		obj.Status.Phase = status

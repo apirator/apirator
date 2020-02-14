@@ -3,6 +3,8 @@ module github.com/apirator/apirator
 go 1.13
 
 require (
+	github.com/getkin/kin-openapi v0.2.0
+	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/operator-framework/operator-sdk v0.15.1
 	github.com/spf13/pflag v1.0.5
 	k8s.io/api v0.0.0
