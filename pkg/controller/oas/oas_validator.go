@@ -26,10 +26,12 @@ func Validate(definition string) error {
 	err := yaml.Unmarshal([]byte(definition), doc)
 	if err != nil {
 		log.Log.Error(err, "Error to parse yaml to oas")
+		return err
 	}
 	oasErr := doc.Validate(context.TODO())
 	if oasErr != nil {
 		log.Log.Error(oasErr, "Open API Specification is invalid")
+		return err
 	}
 	log.Log.Info("Open API Specification is VALID")
 	return nil
