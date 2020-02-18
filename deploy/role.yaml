@@ -1,7 +1,6 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  creationTimestamp: null
   name: apirator
 rules:
 - apiGroups:
@@ -10,8 +9,6 @@ rules:
   - pods
   - services
   - services/finalizers
-  - endpoints
-  - persistentvolumeclaims
   - events
   - configmaps
   - secrets
@@ -27,9 +24,7 @@ rules:
   - apps
   resources:
   - deployments
-  - daemonsets
   - replicasets
-  - statefulsets
   verbs:
   - create
   - delete
@@ -38,13 +33,6 @@ rules:
   - patch
   - update
   - watch
-- apiGroups:
-  - monitoring.coreos.com
-  resources:
-  - servicemonitors
-  verbs:
-  - get
-  - create
 - apiGroups:
   - apps
   resourceNames:
@@ -57,13 +45,6 @@ rules:
   - ""
   resources:
   - pods
-  verbs:
-  - get
-- apiGroups:
-  - apps
-  resources:
-  - replicasets
-  - deployments
   verbs:
   - get
 - apiGroups:

@@ -86,8 +86,8 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	errOas := oas.Validate(instance.Spec.Definition)
-	if errOas != nil {
+	if errOas := oas.Validate(instance.Spec.Definition); errOas != nil {
+		log.Error(errOas, "Open API Specification is invalid")
 		if err := r.markAsInvalidOAS(instance); err != nil {
 			return reconcile.Result{}, err
 		}
