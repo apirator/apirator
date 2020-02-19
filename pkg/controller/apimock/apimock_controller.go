@@ -16,6 +16,7 @@ package apimock
 
 import (
 	"context"
+	"github.com/apirator/apirator/pkg/controller/oas"
 
 	apiratorv1alpha1 "github.com/apirator/apirator/pkg/apis/apirator/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -83,6 +84,13 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
+	}
+
+	if errOas := oas.Validate(instance.Spec.Definition); errOas != nil {
+		log.Error(errOas, "Open API Specification is invalid")
+		if err := r.markAsInvalidOAS(instance); err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 
 	cfmErr := r.EnsureConfigMap(instance)
