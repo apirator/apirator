@@ -5,6 +5,6 @@
 [travis-badge]: https://travis-ci.org/apirator/apirator.svg?branch=master
 [travis-url]: https://travis-ci.org/apirator/apirator
 
-#APIrator
+# APIrator
 
 APIMocks for developers made easy!
