@@ -21,15 +21,18 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"path/filepath"
+	"strconv"
 )
 
 const (
 	mockVolumeMountName = "oas"
 	mockVolumeMountPath = "/etc/oas/"
 	mockPortName        = "mock-port"
+	mockPort            = 8000
 	docPortName         = "doc-port"
-	mockImageName       = "danielgtaylor/apisprout"
-	docImageName        = "apirator/mockdoc"
+	docPort             = 8080
+	mockImageName       = "apirator/mock"
+	docImageName        = "swaggerapi/swagger-ui:v3.25.0"
 )
 
 // it will create the pod template, with doc-container and mock-container
@@ -51,11 +54,17 @@ func BuildPodTemplate(mock *v1alpha1.APIMock) v1.PodTemplateSpec {
 // create mock container, it will deploy the mock api
 func mockContainer(mock *v1alpha1.APIMock) v1.Container {
 	var ports []v1.ContainerPort
-	if mock.Spec.MockContainerPort != 0 {
-		ports = append(ports, v1.ContainerPort{
-			ContainerPort: int32(mock.Spec.MockContainerPort),
-			Name:          mockPortName,
-		})
+	ports = append(ports, v1.ContainerPort{
+		ContainerPort: mockPort,
+		Name:          mockPortName,
+	})
+	cnPort := v1.EnvVar{
+		Name:  "PORT",
+		Value: strconv.Itoa(mockPort),
+	}
+	oasPath := v1.EnvVar{
+		Name:  "SWAGGER_JSON",
+		Value: "/etc/oas/oas.json",
 	}
 	return v1.Container{
 		Name:    mock.GetName(),
@@ -67,18 +76,20 @@ func mockContainer(mock *v1alpha1.APIMock) v1.Container {
 		VolumeMounts: volumeMount(),
 		Ports:        ports,
 		Resources:    requirements(),
+		Env:          []v1.EnvVar{cnPort, oasPath},
 	}
-
 }
 
 // create documentation container, it will used for display the swagger-ui
 func docContainer(mock *v1alpha1.APIMock) v1.Container {
 	var ports []v1.ContainerPort
-	if mock.Spec.DocContainerPort != 0 {
-		ports = append(ports, v1.ContainerPort{
-			ContainerPort: int32(mock.Spec.DocContainerPort),
-			Name:          docPortName,
-		})
+	ports = append(ports, v1.ContainerPort{
+		ContainerPort: docPort,
+		Name:          docPortName,
+	})
+	cnPort := v1.EnvVar{
+		Name:  "PORT",
+		Value: strconv.Itoa(docPort),
 	}
 	return v1.Container{
 		Name:         mock.GetName(),
@@ -86,6 +97,7 @@ func docContainer(mock *v1alpha1.APIMock) v1.Container {
 		VolumeMounts: volumeMount(),
 		Ports:        ports,
 		Resources:    requirements(),
+		Env:          []v1.EnvVar{cnPort},
 	}
 
 }
