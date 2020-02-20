@@ -27,11 +27,96 @@ const (
 	mockVolumeMountName = "oas"
 	mockVolumeMountPath = "/etc/oas/"
 	mockPortName        = "mock-port"
+	docPortName         = "doc-port"
 	mockImageName       = "danielgtaylor/apisprout"
+	docImageName        = "apirator/mockdoc"
 )
 
+// it will create the pod template, with doc-container and mock-container
 func BuildPodTemplate(mock *v1alpha1.APIMock) v1.PodTemplateSpec {
-	volumes := []v1.Volume{{
+	volumes := podVolume(mock)
+	return v1.PodTemplateSpec{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      mock.GetName(),
+			Namespace: mock.GetNamespace(),
+			Labels:    labels.LabelForAPIMock(mock),
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{mockContainer(mock), docContainer(mock)},
+			Volumes:    volumes,
+		},
+	}
+}
+
+// create mock container, it will deploy the mock api
+func mockContainer(mock *v1alpha1.APIMock) v1.Container {
+	var ports []v1.ContainerPort
+	if mock.Spec.MockContainerPort != 0 {
+		ports = append(ports, v1.ContainerPort{
+			ContainerPort: int32(mock.Spec.MockContainerPort),
+			Name:          mockPortName,
+		})
+	}
+	return v1.Container{
+		Name:    mock.GetName(),
+		Image:   mockImageName,
+		Command: []string{"apisprout"},
+		Args: []string{
+			mockVolumeMountPath + "/" + "oas.yaml",
+		},
+		VolumeMounts: volumeMount(),
+		Ports:        ports,
+		Resources:    requirements(),
+	}
+
+}
+
+// create documentation container, it will used for display the swagger-ui
+func docContainer(mock *v1alpha1.APIMock) v1.Container {
+	var ports []v1.ContainerPort
+	if mock.Spec.DocContainerPort != 0 {
+		ports = append(ports, v1.ContainerPort{
+			ContainerPort: int32(mock.Spec.DocContainerPort),
+			Name:          docPortName,
+		})
+	}
+	return v1.Container{
+		Name:         mock.GetName(),
+		Image:        docImageName,
+		VolumeMounts: volumeMount(),
+		Ports:        ports,
+		Resources:    requirements(),
+	}
+
+}
+
+// configure the volume mount for containers
+func volumeMount() []v1.VolumeMount {
+	return []v1.VolumeMount{{
+		Name:      mockVolumeMountName,
+		MountPath: filepath.Dir(mockVolumeMountPath),
+	}}
+}
+
+// configure minimum requirements
+func requirements() (resourcesReq v1.ResourceRequirements) {
+	// Configure Requests
+	requests := v1.ResourceList{}
+	requests[v1.ResourceCPU] = resource.MustParse("10m")
+	requests[v1.ResourceMemory] = resource.MustParse("5Mi")
+	// Configure Limits
+	limits := v1.ResourceList{}
+	limits[v1.ResourceCPU] = resource.MustParse("20m")
+	limits[v1.ResourceMemory] = resource.MustParse("10Mi")
+	return v1.ResourceRequirements{
+		Limits:   limits,
+		Requests: requests,
+	}
+}
+
+// configure the pod volumes
+func podVolume(mock *v1alpha1.APIMock) []v1.Volume {
+	return []v1.Volume{{
 		Name: mockVolumeMountName,
 		VolumeSource: v1.VolumeSource{
 			ConfigMap: &v1.ConfigMapVolumeSource{
@@ -41,56 +126,4 @@ func BuildPodTemplate(mock *v1alpha1.APIMock) v1.PodTemplateSpec {
 			},
 		},
 	}}
-	return v1.PodTemplateSpec{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      mock.GetName(),
-			Namespace: mock.GetNamespace(),
-			Labels:    labels.LabelForAPIMock(mock),
-		},
-		Spec: v1.PodSpec{
-			Containers: []v1.Container{mockContainer(mock)},
-			Volumes:    volumes,
-		},
-	}
-}
-
-func mockContainer(mock *v1alpha1.APIMock) v1.Container {
-	vm := []v1.VolumeMount{{
-		Name:      mockVolumeMountName,
-		MountPath: filepath.Dir(mockVolumeMountPath),
-	}}
-	var ports []v1.ContainerPort
-	if mock.Spec.ContainerPort != 0 {
-		ports = append(ports, v1.ContainerPort{
-			ContainerPort: int32(mock.Spec.ContainerPort),
-			Name:          mockPortName,
-		})
-	}
-
-	// Configure Requests
-	requests := v1.ResourceList{}
-	requests[v1.ResourceCPU] = resource.MustParse("10m")
-	requests[v1.ResourceMemory] = resource.MustParse("5Mi")
-
-	// Configure Limits
-	limits := v1.ResourceList{}
-	limits[v1.ResourceCPU] = resource.MustParse("20m")
-	limits[v1.ResourceMemory] = resource.MustParse("10Mi")
-
-	requirements := v1.ResourceRequirements{
-		Limits:   limits,
-		Requests: requests,
-	}
-	return v1.Container{
-		Name:    mock.GetName(),
-		Image:   mockImageName,
-		Command: []string{"apisprout"},
-		Args: []string{
-			mockVolumeMountPath + "/" + "oas.yaml",
-		},
-		VolumeMounts: vm,
-		Ports:        ports,
-		Resources:    requirements,
-	}
-
 }
