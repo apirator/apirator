@@ -2,8 +2,9 @@ dist: trusty
 
 jobs:
   include:
-  - stage: build docker image
+  - stage: build
     script:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
     - docker build -f build/Dockerfile -t $DOCKER_USERNAME/apirator .
     - docker push $DOCKER_USERNAME/apirator
+    if: branch = master
