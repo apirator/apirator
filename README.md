@@ -9,7 +9,7 @@
 
 ### Build
 
-We are using operator-sdk to manage our lifecycle, you should have the operator-sdk installed.
+We are using [operator-sdk](https://github.com/operator-framework/operator-sdk) to manage our lifecycle, you should have the operator-sdk installed.
 On the root folder you can use the following command to build and create the docker image
 
 ````shell script

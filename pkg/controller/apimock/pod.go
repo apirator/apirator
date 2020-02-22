@@ -64,21 +64,17 @@ func mockContainer(mock *v1alpha1.APIMock) v1.Container {
 		Name:  "PORT",
 		Value: strconv.Itoa(mockPort),
 	}
-	oasPath := v1.EnvVar{
-		Name:  "SWAGGER_JSON",
-		Value: "/etc/oas/oas.json",
-	}
 	return v1.Container{
 		Name:    mockContainerName,
 		Image:   mockImageName,
 		Command: []string{"apisprout"},
 		Args: []string{
-			mockVolumeMountPath + "/" + "oas.yaml",
+			mockVolumeMountPath + "oas.yaml",
 		},
 		VolumeMounts: volumeMount(),
 		Ports:        ports,
 		Resources:    requirements(),
-		Env:          []v1.EnvVar{cnPort, oasPath},
+		Env:          []v1.EnvVar{cnPort},
 	}
 }
 
@@ -93,13 +89,17 @@ func docContainer(mock *v1alpha1.APIMock) v1.Container {
 		Name:  "PORT",
 		Value: strconv.Itoa(docPort),
 	}
+	oasPath := v1.EnvVar{
+		Name:  "SWAGGER_JSON",
+		Value: "/etc/oas/oas.json",
+	}
 	return v1.Container{
 		Name:         docContainerName,
 		Image:        docImageName,
 		VolumeMounts: volumeMount(),
 		Ports:        ports,
 		Resources:    requirements(),
-		Env:          []v1.EnvVar{cnPort},
+		Env:          []v1.EnvVar{cnPort, oasPath},
 	}
 
 }
