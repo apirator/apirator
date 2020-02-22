@@ -47,14 +47,14 @@ func BuildPodTemplate(mock *v1alpha1.APIMock) v1.PodTemplateSpec {
 			Labels:    labels.LabelForAPIMock(mock),
 		},
 		Spec: v1.PodSpec{
-			Containers: []v1.Container{mockContainer(mock), docContainer(mock)},
+			Containers: []v1.Container{mockContainer(), docContainer()},
 			Volumes:    volumes,
 		},
 	}
 }
 
 // create mock container, it will deploy the mock api
-func mockContainer(mock *v1alpha1.APIMock) v1.Container {
+func mockContainer() v1.Container {
 	var ports []v1.ContainerPort
 	ports = append(ports, v1.ContainerPort{
 		ContainerPort: mockPort,
@@ -79,7 +79,7 @@ func mockContainer(mock *v1alpha1.APIMock) v1.Container {
 }
 
 // create documentation container, it will used for display the swagger-ui
-func docContainer(mock *v1alpha1.APIMock) v1.Container {
+func docContainer() v1.Container {
 	var ports []v1.ContainerPort
 	ports = append(ports, v1.ContainerPort{
 		ContainerPort: docPort,
