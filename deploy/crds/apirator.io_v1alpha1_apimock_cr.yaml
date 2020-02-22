@@ -3,7 +3,6 @@ kind: APIMock
 metadata:
   name: example-apimock
 spec:
-  containerPort: 8000
   serviceDefinition:
     port: 8000
     serviceType: ClusterIP

@@ -3,13 +3,6 @@ kind: CustomResourceDefinition
 metadata:
   name: apimocks.apirator.io
 spec:
-  additionalPrinterColumns:
-    - JSONPath: .status.phase
-      name: Phase
-      type: string
-    - JSONPath: .metadata.creationTimestamp
-      name: Age
-      type: date
   group: apirator.io
   names:
     kind: APIMock
@@ -38,8 +31,6 @@ spec:
         spec:
           description: APIMockSpec defines the desired state of APIMock
           properties:
-            containerPort:
-              type: integer
             definition:
               description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
                 Important: Run "operator-sdk generate k8s" to regenerate code after

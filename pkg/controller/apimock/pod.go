@@ -33,6 +33,8 @@ const (
 	docPort             = 8080
 	mockImageName       = "apirator/mock"
 	docImageName        = "swaggerapi/swagger-ui:v3.25.0"
+	docContainerName    = "doc"
+	mockContainerName   = "mock"
 )
 
 // it will create the pod template, with doc-container and mock-container
@@ -67,7 +69,7 @@ func mockContainer(mock *v1alpha1.APIMock) v1.Container {
 		Value: "/etc/oas/oas.json",
 	}
 	return v1.Container{
-		Name:    mock.GetName(),
+		Name:    mockContainerName,
 		Image:   mockImageName,
 		Command: []string{"apisprout"},
 		Args: []string{
@@ -92,7 +94,7 @@ func docContainer(mock *v1alpha1.APIMock) v1.Container {
 		Value: strconv.Itoa(docPort),
 	}
 	return v1.Container{
-		Name:         mock.GetName(),
+		Name:         docContainerName,
 		Image:        docImageName,
 		VolumeMounts: volumeMount(),
 		Ports:        ports,
