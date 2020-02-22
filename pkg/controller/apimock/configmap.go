@@ -19,6 +19,7 @@ import (
 	"github.com/apirator/apirator/pkg/apis/apirator/v1alpha1"
 	"github.com/apirator/apirator/pkg/controller/k8s/util/labels"
 	"github.com/apirator/apirator/pkg/controller/k8s/util/owner"
+	yu "github.com/ghodss/yaml"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,7 +27,10 @@ import (
 	"path/filepath"
 )
 
-const yamlConfigPath = "/etc/oas/oas.yaml"
+const (
+	yamlConfigPath = "/etc/oas/oas.yaml"
+	jsonConfigPath = "/etc/oas/oas.json"
+)
 
 func (r *ReconcileAPIMock) EnsureConfigMap(mock *v1alpha1.APIMock) error {
 	cMap := &v1.ConfigMap{}
@@ -36,6 +40,12 @@ func (r *ReconcileAPIMock) EnsureConfigMap(mock *v1alpha1.APIMock) error {
 	}, cMap)
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("ConfigMap not found. Starting creation...", "ConfigMap.Namespace", mock.Namespace, "ConfigMap.Name", mock.Name)
+
+		bJson, jsonErr := yu.YAMLToJSON([]byte(mock.Spec.Definition))
+		if jsonErr != nil {
+			log.Error(err, "Failed to read oas spec in json model", "APIMock.Namespace", mock.Namespace, "APIMock.Name", mock.Name)
+			return err
+		}
 		cm := &v1.ConfigMap{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ConfigMap",
@@ -46,7 +56,8 @@ func (r *ReconcileAPIMock) EnsureConfigMap(mock *v1alpha1.APIMock) error {
 				Name:      mock.GetName(),
 				Labels:    labels.LabelForAPIMock(mock),
 			},
-			Data: map[string]string{filepath.Base(yamlConfigPath): mock.Spec.Definition},
+			Data: map[string]string{filepath.Base(yamlConfigPath): mock.Spec.Definition,
+				filepath.Base(jsonConfigPath): string(bJson)},
 		}
 		owner.AddOwnerRefToObject(cm, owner.AsOwner(&mock.ObjectMeta))
 		err = r.client.Create(context.TODO(), cm)
