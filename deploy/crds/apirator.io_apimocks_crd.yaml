@@ -58,6 +58,7 @@ spec:
               enum:
               - PROVISIONED
               - ERROR
+              - INVALID_OAS
               type: string
           type: object
       type: object

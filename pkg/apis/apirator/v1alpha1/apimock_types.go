@@ -44,7 +44,7 @@ type APIMockStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-	// +kubebuilder:validation:Enum=PROVISIONED;ERROR;
+	// +kubebuilder:validation:Enum=PROVISIONED;ERROR;INVALID_OAS;
 	Phase string `json:"phase,omitempty"`
 }
 

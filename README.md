@@ -1,16 +1,18 @@
-[![Build Status][travis-badge]][travis-url]
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+<img src="https://user-images.githubusercontent.com/60846980/75095667-1977b980-5576-11ea-93fd-169c0522319b.png" width="300" alt="APIrator"/>
 
-[travis-badge]: https://travis-ci.org/apirator/apirator.svg?branch=master
-[travis-url]: https://travis-ci.org/apirator/apirator
+
+
+
+[![Build Status](https://travis-ci.org/apirator/apirator.svg?branch=master)](https://travis-ci.org/apirator/apirator) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Docker Pulls](https://img.shields.io/docker/pulls/apirator/apirator.svg)](https://hub.docker.com/r/apirator/apirator/) 
+
 
 # APIrator
 
-APIMocks for developers made easy!
+API Mocks for developers made easy!
 
 
-## Development commands
+## Development Instructions
 
 ### Build
 
@@ -49,6 +51,8 @@ kubectl apply -f <YOUR_GOLANG_PROJECT_FOLDER>/apirator/deploy/operator.yaml -n o
 ````
 
 
-###References:
+### References:
 
 You can find more instructions about operator-sdk command line [here](https://docs.openshift.com/container-platform/4.1/applications/operator_sdk/osdk-getting-started.html)
+
+## License
