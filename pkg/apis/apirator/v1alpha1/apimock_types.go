@@ -37,6 +37,7 @@ type APIMockSpec struct {
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 	Definition        string            `json:"definition,omitempty"`
 	ServiceDefinition ServiceDefinition `json:"serviceDefinition,omitempty"`
+	Watch             bool              `json:"watch,omitempty"`
 }
 
 // APIMockStatus defines the observed state of APIMock

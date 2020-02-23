@@ -33,17 +33,41 @@ const (
 )
 
 func (r *ReconcileAPIMock) EnsureConfigMap(mock *v1alpha1.APIMock) error {
+	// find the configmap element
 	cMap := &v1.ConfigMap{}
+
 	err := r.client.Get(context.TODO(), types.NamespacedName{
 		Name:      mock.GetName(),
 		Namespace: mock.Namespace,
 	}, cMap)
+
+	// the OAS Definition was re-defined. We should update the item definition
+	// https://itnext.io/how-to-automatically-update-your-kubernetes-app-configuration-d750e0ca79ab
+	if err != nil && cMap != nil && v1alpha1.PROVISIONED == mock.Status.Phase && mock.Spec.Watch {
+		log.Info("Starting updating configmap", "ConfigMap.Namespace", mock.Namespace, "ConfigMap.Name", mock.Name)
+		bJson, jsonErr := yu.YAMLToJSON([]byte(mock.Spec.Definition))
+		if jsonErr != nil {
+			log.Error(err, "[UPDATE] - Failed to read oas spec in json model", "APIMock.Namespace", mock.Namespace, "APIMock.Name", mock.Name)
+			return err
+		}
+		cMap.Data = map[string]string{filepath.Base(yamlConfigPath): mock.Spec.Definition,
+			filepath.Base(jsonConfigPath): string(bJson)}
+		updErr := r.client.Update(context.TODO(), cMap)
+		if updErr != nil {
+			log.Error(err, "Failed to update ConfigMap", "ConfigMap.Namespace", mock.Namespace, "ConfigMap.Name", mock.Name)
+			return err
+		}
+		log.Info("ConfigMap update successfully", "ConfigMap.Namespace", mock.Namespace, "ConfigMap.Name", mock.Name)
+		return nil
+	}
+
+	// The first interaction. Things should be created.
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("ConfigMap not found. Starting creation...", "ConfigMap.Namespace", mock.Namespace, "ConfigMap.Name", mock.Name)
 
 		bJson, jsonErr := yu.YAMLToJSON([]byte(mock.Spec.Definition))
 		if jsonErr != nil {
-			log.Error(err, "Failed to read oas spec in json model", "APIMock.Namespace", mock.Namespace, "APIMock.Name", mock.Name)
+			log.Error(err, "[CREATE] - Failed to read oas spec in json model", "APIMock.Namespace", mock.Namespace, "APIMock.Name", mock.Name)
 			return err
 		}
 		cm := &v1.ConfigMap{
