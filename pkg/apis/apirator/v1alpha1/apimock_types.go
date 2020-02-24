@@ -56,8 +56,10 @@ type ServiceDefinition struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // APIMock is the Schema for the apimocks API
+// +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=apimocks,scope=Namespaced
+// +kubebuilder:printcolumn:JSONPath=".status.phase",name=Status,type=string
 type APIMock struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
