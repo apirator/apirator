@@ -27,7 +27,8 @@ import (
 )
 
 const (
-	svcPortName = "http"
+	svcPortName  = "http"
+	docsPortName = "docs"
 )
 
 func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
@@ -40,10 +41,16 @@ func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
 		}, svcK8s)
 		if err != nil && errors.IsNotFound(err) {
 			log.Info("Service not found. Starting creation...", "Service.Namespace", mock.Namespace, "Service.Name", mock.Name)
-			svcPort := v1.ServicePort{
+			mockPort := v1.ServicePort{
 				Name:       svcPortName,
 				Protocol:   "TCP",
 				Port:       int32(mock.Spec.ServiceDefinition.Port),
+				TargetPort: intstr.FromInt(8000),
+			}
+			docPort := v1.ServicePort{
+				Name:       docsPortName,
+				Protocol:   "TCP",
+				Port:       int32(8080),
 				TargetPort: intstr.FromInt(8000),
 			}
 			svc := &v1.Service{
@@ -58,7 +65,7 @@ func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
 				Spec: v1.ServiceSpec{
 					Selector: labels.LabelForAPIMock(mock),
 					Type:     mock.Spec.ServiceDefinition.ServiceType,
-					Ports:    []v1.ServicePort{svcPort},
+					Ports:    []v1.ServicePort{mockPort, docPort},
 				},
 			}
 			owner.AddOwnerRefToObject(svc, owner.AsOwner(&mock.ObjectMeta))
