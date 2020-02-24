@@ -56,7 +56,7 @@ func (r *ReconcileAPIMock) markAsInvalidOAS(obj *apirator.APIMock) error {
 func (r *ReconcileAPIMock) updateStatus(obj *apirator.APIMock, status string) error {
 	if obj.Status.Phase != status {
 		obj.Status.Phase = status
-		err := r.client.Update(context.TODO(), obj)
+		err := r.client.Status().Update(context.TODO(), obj)
 		if err != nil {
 			return err
 		}
