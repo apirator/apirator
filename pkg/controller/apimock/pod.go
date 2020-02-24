@@ -47,7 +47,7 @@ func BuildPodTemplate(mock *v1alpha1.APIMock) v1.PodTemplateSpec {
 			Labels:    labels.LabelForAPIMock(mock),
 		},
 		Spec: v1.PodSpec{
-			Containers: []v1.Container{mockContainer(), docContainer()},
+			Containers: []v1.Container{mockContainer(mock), docContainer()},
 			Volumes:    volumes,
 		},
 	}
