@@ -6,6 +6,7 @@ spec:
   serviceDefinition:
     port: 8000
     serviceType: ClusterIP
+  watch: false
   definition: |
     openapi: "3.0.0"
     info:
