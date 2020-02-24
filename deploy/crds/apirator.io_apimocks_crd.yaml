@@ -3,6 +3,10 @@ kind: CustomResourceDefinition
 metadata:
   name: apimocks.apirator.io
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.phase
+    name: Status
+    type: string
   group: apirator.io
   names:
     kind: APIMock
