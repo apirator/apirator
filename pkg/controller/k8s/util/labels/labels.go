@@ -19,5 +19,5 @@ import (
 )
 
 func LabelForAPIMock(mock *v1alpha1.APIMock) map[string]string {
-	return map[string]string{"app": "apirator", "api": mock.Name, "managed-by": "apirator"}
+	return map[string]string{"api": mock.Name, "managed-by": "apirator"}
 }
