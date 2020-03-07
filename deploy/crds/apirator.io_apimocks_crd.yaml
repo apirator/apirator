@@ -50,6 +50,8 @@ spec:
                     service
                   type: string
               type: object
+            watch:
+              type: boolean
           type: object
         status:
           description: APIMockStatus defines the observed state of APIMock

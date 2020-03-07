@@ -93,6 +93,7 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 		if err := r.markAsInvalidOAS(instance); err != nil {
 			return reconcile.Result{}, err
 		}
+		return reconcile.Result{}, errOas
 	}
 
 	cfmErr := r.EnsureConfigMap(instance)

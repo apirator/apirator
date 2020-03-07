@@ -47,14 +47,14 @@ func BuildPodTemplate(mock *v1alpha1.APIMock) v1.PodTemplateSpec {
 			Labels:    labels.LabelForAPIMock(mock),
 		},
 		Spec: v1.PodSpec{
-			Containers: []v1.Container{mockContainer(), docContainer()},
+			Containers: []v1.Container{mockContainer(mock), docContainer()},
 			Volumes:    volumes,
 		},
 	}
 }
 
 // create mock container, it will deploy the mock api
-func mockContainer() v1.Container {
+func mockContainer(mock *v1alpha1.APIMock) v1.Container {
 	var ports []v1.ContainerPort
 	ports = append(ports, v1.ContainerPort{
 		ContainerPort: mockPort,
@@ -63,6 +63,10 @@ func mockContainer() v1.Container {
 	cnPort := v1.EnvVar{
 		Name:  "PORT",
 		Value: strconv.Itoa(mockPort),
+	}
+	cnWatch := v1.EnvVar{
+		Name:  "WATCH",
+		Value: strconv.FormatBool(mock.Spec.Watch),
 	}
 	return v1.Container{
 		Name:    mockContainerName,
@@ -74,7 +78,7 @@ func mockContainer() v1.Container {
 		VolumeMounts: volumeMount(),
 		Ports:        ports,
 		Resources:    requirements(),
-		Env:          []v1.EnvVar{cnPort},
+		Env:          []v1.EnvVar{cnPort, cnWatch},
 	}
 }
 
