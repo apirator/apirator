@@ -50,6 +50,15 @@ To deploy the apirator you should execute the following command
 kubectl apply -f <YOUR_GOLANG_PROJECT_FOLDER>/apirator/deploy/operator.yaml -n oas
 ````
 
+### Operator Manifests Generator
+
+To be able to integrate with Operator HUB we need to generate Operator Manifest. We are able to do that using the operator SDK.
+
+In the root folder execute the following command
+
+```shell script
+operator-sdk generate csv --csv-version 0.0.1 --update-crds
+```
 
 ### References:
 
