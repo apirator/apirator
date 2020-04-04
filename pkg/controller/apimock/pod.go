@@ -20,6 +20,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"path/filepath"
 	"strconv"
 )
@@ -68,6 +69,24 @@ func mockContainer(mock *v1alpha1.APIMock) v1.Container {
 		Name:  "WATCH",
 		Value: strconv.FormatBool(mock.Spec.Watch),
 	}
+
+	// Handler for probes
+	rh := v1.Handler{
+		HTTPGet: &v1.HTTPGetAction{
+			Path:   "/__health",
+			Port:   intstr.FromInt(8000),
+			Scheme: "HTTP",
+		},
+	}
+
+	// LivenessProbe and Readiness Probe
+	rp := &v1.Probe{
+		Handler:             rh,
+		InitialDelaySeconds: 2,
+		TimeoutSeconds:      1,
+		PeriodSeconds:       3,
+	}
+
 	return v1.Container{
 		Name:    mockContainerName,
 		Image:   mockImageName,
@@ -75,10 +94,12 @@ func mockContainer(mock *v1alpha1.APIMock) v1.Container {
 		Args: []string{
 			mockVolumeMountPath + "oas.yaml",
 		},
-		VolumeMounts: volumeMount(),
-		Ports:        ports,
-		Resources:    requirements(),
-		Env:          []v1.EnvVar{cnPort, cnWatch},
+		VolumeMounts:   volumeMount(),
+		Ports:          ports,
+		Resources:      requirements(),
+		Env:            []v1.EnvVar{cnPort, cnWatch},
+		ReadinessProbe: rp,
+		LivenessProbe:  rp,
 	}
 }
 
