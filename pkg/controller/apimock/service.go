@@ -79,6 +79,15 @@ func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
 		} else if err != nil {
 			log.Error(err, "Failed to get Service")
 			return err
+		} else {
+			if mock.AnnotateClusterIP(svcK8s.Spec.ClusterIP) || mock.AnnotatePorts(svcK8s.Spec.Ports) {
+				err := r.client.Update(context.TODO(), mock)
+				if err != nil {
+					log.Error(err, "Failed to update APIMock annotations", "Service.Namespace", svcK8s.Namespace, "Service.Name", svcK8s.Name, "Service.ClusterIP", mock.Annotations["cluster-ip"], "Service.Ports", mock.Annotations["ports"])
+					return err
+				}
+				log.Info("APIMock annotations update successfully", "Service.Namespace", svcK8s.Namespace, "Service.Name", svcK8s.Name, "Service.ClusterIP", mock.Annotations["cluster-ip"], "Service.Ports", mock.Annotations["ports"])
+			}
 		}
 	} else {
 		log.Info("Service is not necessary")
