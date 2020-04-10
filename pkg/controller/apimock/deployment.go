@@ -16,9 +16,9 @@ package apimock
 
 import (
 	"context"
+
 	"github.com/apirator/apirator/pkg/apis/apirator/v1alpha1"
 	"github.com/apirator/apirator/pkg/controller/k8s/util/labels"
-	"github.com/apirator/apirator/pkg/controller/k8s/util/owner"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,9 +43,10 @@ func (r *ReconcileAPIMock) EnsureDeployment(mock *v1alpha1.APIMock) error {
 				APIVersion: "apps/v1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      mock.GetName(),
-				Namespace: mock.GetNamespace(),
-				Labels:    labels.LabelForAPIMock(mock),
+				Name:            mock.GetName(),
+				Namespace:       mock.GetNamespace(),
+				Labels:          labels.LabelForAPIMock(mock),
+				OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(mock, mock.GroupVersionKind())},
 			},
 			Spec: v1.DeploymentSpec{
 				Replicas: &reps,
@@ -60,8 +61,6 @@ func (r *ReconcileAPIMock) EnsureDeployment(mock *v1alpha1.APIMock) error {
 				},
 			},
 		}
-		ref := owner.AsOwner(&mock.ObjectMeta)
-		d.SetOwnerReferences([]metav1.OwnerReference{ref})
 		err := r.client.Create(context.TODO(), d)
 		if err != nil {
 			log.Error(err, "Failed to create Deployment")

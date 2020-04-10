@@ -16,9 +16,9 @@ package apimock
 
 import (
 	"context"
+
 	"github.com/apirator/apirator/pkg/apis/apirator/v1alpha1"
 	"github.com/apirator/apirator/pkg/controller/k8s/util/labels"
-	"github.com/apirator/apirator/pkg/controller/k8s/util/owner"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -59,8 +59,9 @@ func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
 					APIVersion: "v1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      mock.GetName(),
-					Namespace: mock.GetNamespace(),
+					Name:            mock.GetName(),
+					Namespace:       mock.GetNamespace(),
+					OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(mock, mock.GroupVersionKind())},
 				},
 				Spec: v1.ServiceSpec{
 					Selector: labels.LabelForAPIMock(mock),
@@ -68,7 +69,6 @@ func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
 					Ports:    []v1.ServicePort{mockPort, docPort},
 				},
 			}
-			owner.AddOwnerRefToObject(svc, owner.AsOwner(&mock.ObjectMeta))
 			err := r.client.Create(context.TODO(), svc)
 			if err != nil {
 				log.Error(err, "Failed to create new Service", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
