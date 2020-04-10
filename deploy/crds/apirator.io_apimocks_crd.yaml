@@ -41,6 +41,12 @@ spec:
                 modifying this file Add custom validation using kubebuilder tags:
                 https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html'
               type: string
+            host:
+              type: string
+            selector:
+              additionalProperties:
+                type: string
+              type: object
             serviceDefinition:
               properties:
                 port:

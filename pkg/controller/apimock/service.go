@@ -51,7 +51,7 @@ func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
 				Name:       docsPortName,
 				Protocol:   "TCP",
 				Port:       int32(8080),
-				TargetPort: intstr.FromInt(8000),
+				TargetPort: intstr.FromInt(8080),
 			}
 			svc := &v1.Service{
 				TypeMeta: metav1.TypeMeta{

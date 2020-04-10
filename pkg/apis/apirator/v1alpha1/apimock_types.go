@@ -23,9 +23,11 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 const (
-	PROVISIONED = "PROVISIONED"
-	ERROR       = "ERROR"
-	INVALID_OAS = "INVALID_OAS"
+	PROVISIONED  = "PROVISIONED"
+	ERROR        = "ERROR"
+	INVALID_OAS  = "INVALID_OAS"
+	IngressTag   = "ingress"
+	NamespaceTag = "namespace"
 )
 
 // APIMockSpec defines the desired state of APIMock
@@ -38,6 +40,8 @@ type APIMockSpec struct {
 	Definition        string            `json:"definition,omitempty"`
 	ServiceDefinition ServiceDefinition `json:"serviceDefinition,omitempty"`
 	Watch             bool              `json:"watch,omitempty"`
+	Selector          map[string]string `json:"selector,omitempty"`
+	Host              string            `json:"host,omitempty"`
 }
 
 // APIMockStatus defines the observed state of APIMock
@@ -49,9 +53,17 @@ type APIMockStatus struct {
 	Phase string `json:"phase,omitempty"`
 }
 
+// Service Definition it will "link" the mock with created service
 type ServiceDefinition struct {
 	Port        int            `json:"port,omitempty"`
 	ServiceType v1.ServiceType `json:"serviceType,omitempty"`
+}
+
+// It indicates if apimock will be exposed in ingress-controller
+func (in *APIMock) ExposeInIngress() bool {
+	it := in.Spec.Selector[IngressTag]
+	ns := in.Spec.Selector[NamespaceTag]
+	return len(it) > 0 && len(ns) > 0
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

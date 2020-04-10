@@ -88,7 +88,9 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	reqLogger.Info("APIMock status", "APIMock.Status", instance.Status.Phase)
 
-	if errOas := oas.Validate(instance.Spec.Definition); errOas != nil {
+	doc, errOas := oas.Validate(instance.Spec.Definition)
+
+	if errOas != nil {
 		log.Error(errOas, "Open API Specification is invalid")
 		if err := r.markAsInvalidOAS(instance); err != nil {
 			return reconcile.Result{}, err
@@ -112,6 +114,13 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	svcErr := r.EnsureService(instance)
 	if svcErr != nil {
+		if err := r.markAsFailure(instance); err != nil {
+			return reconcile.Result{}, err
+		}
+	}
+
+	ingErr := r.EnsureIngress(instance, doc)
+	if ingErr != nil {
 		if err := r.markAsFailure(instance); err != nil {
 			return reconcile.Result{}, err
 		}

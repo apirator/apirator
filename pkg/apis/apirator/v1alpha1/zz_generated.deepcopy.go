@@ -13,7 +13,7 @@ func (in *APIMock) DeepCopyInto(out *APIMock) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	out.Spec = in.Spec
+	in.Spec.DeepCopyInto(&out.Spec)
 	out.Status = in.Status
 	return
 }
@@ -73,6 +73,13 @@ func (in *APIMockList) DeepCopyObject() runtime.Object {
 func (in *APIMockSpec) DeepCopyInto(out *APIMockSpec) {
 	*out = *in
 	out.ServiceDefinition = in.ServiceDefinition
+	if in.Selector != nil {
+		in, out := &in.Selector, &out.Selector
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 
