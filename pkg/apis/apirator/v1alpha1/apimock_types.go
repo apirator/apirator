@@ -16,6 +16,8 @@ package v1alpha1
 
 import (
 	"github.com/redhat-cop/operator-utils/pkg/util"
+	"fmt"
+
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -83,12 +85,34 @@ func (in *APIMock) ExposeInIngress() bool {
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=apimocks,scope=Namespaced
 // +kubebuilder:printcolumn:JSONPath=".status.phase",name=Status,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.cluster-ip",name=CLUSTER-IP,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.ports",name=PORT(S),type=string
 type APIMock struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   APIMockSpec   `json:"spec,omitempty"`
 	Status APIMockStatus `json:"status,omitempty"`
+}
+
+func (in *APIMock) AnnotatePorts(ports []v1.ServicePort) (updated bool) {
+	var p string
+	for _, port := range ports {
+		if len(p) > 0 {
+			p = fmt.Sprintf("%s,%d/%s", p, port.Port, port.Protocol)
+		} else {
+			p = fmt.Sprintf("%d/%s", port.Port, port.Protocol)
+		}
+	}
+	updated = in.Annotations["ports"] != p
+	in.Annotations["ports"] = p
+	return updated
+}
+
+func (in *APIMock) AnnotateClusterIP(ip string) (updated bool) {
+	updated = in.Annotations["cluster-ip"] != ip
+	in.Annotations["cluster-ip"] = ip
+	return updated
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

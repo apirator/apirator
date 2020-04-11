@@ -1,5 +1,5 @@
 ## Builder Image
-FROM golang:1.13-stretch as builder
+FROM golang:1.14-stretch as builder
 ENV GO111MODULE=on
 COPY . /apirator
 WORKDIR /apirator

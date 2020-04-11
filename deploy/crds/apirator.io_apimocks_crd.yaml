@@ -7,6 +7,12 @@ spec:
   - JSONPath: .status.phase
     name: Status
     type: string
+  - JSONPath: .metadata.annotations.cluster-ip
+    name: CLUSTER-IP
+    type: string
+  - JSONPath: .metadata.annotations.ports
+    name: PORT(S)
+    type: string
   group: apirator.io
   names:
     kind: APIMock
