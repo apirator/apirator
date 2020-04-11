@@ -7,9 +7,10 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/google/addlicense v0.0.0-20200109101052-9fa18aaf59fb // indirect
 	github.com/operator-framework/operator-sdk v0.15.1
+	github.com/redhat-cop/operator-utils v0.1.1
 	github.com/spf13/pflag v1.0.5
 	k8s.io/api v0.0.0
-	k8s.io/apimachinery v0.0.0
+	k8s.io/apimachinery v0.17.0
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/kube-openapi v0.0.0-20190918143330-0270cf2f1c1d
 	sigs.k8s.io/controller-runtime v0.4.0

@@ -15,6 +15,7 @@
 package v1alpha1
 
 import (
+	"github.com/redhat-cop/operator-utils/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -29,6 +30,12 @@ const (
 	IngressTag   = "ingress"
 	NamespaceTag = "namespace"
 )
+
+type Step struct {
+	Action      string      `json:"action,omitempty"`
+	LastUpdate  metav1.Time `json:"lastUpdate,omitempty"`
+	Description string      `json:"description,omitempty"`
+}
 
 // APIMockSpec defines the desired state of APIMock
 // +kubebuilder:subresource:status
@@ -51,6 +58,7 @@ type APIMockStatus struct {
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 	// +kubebuilder:validation:Enum=PROVISIONED;ERROR;INVALID_OAS;
 	Phase string `json:"phase,omitempty"`
+	Steps []Step `json:"steps"`
 }
 
 // Service Definition it will "link" the mock with created service
@@ -92,4 +100,18 @@ type APIMockList struct {
 
 func init() {
 	SchemeBuilder.Register(&APIMock{}, &APIMockList{})
+}
+
+// ================================================================
+//                        Domain functions
+// ================================================================
+
+// Add the desired finalizer
+func (in *APIMock) AddFinalizer(finalizerName string) {
+	util.AddFinalizer(in, finalizerName)
+}
+
+// Remove the desired finalizer
+func (in *APIMock) RemoveFinalizer(finalizerName string) {
+	util.RemoveFinalizer(in, finalizerName)
 }

@@ -47,6 +47,40 @@ func (r *ReconcileAPIMock) EnsureIngress(mock *v1alpha1.APIMock, doc *openapi3.S
 	return nil
 }
 
+// remove apimock entry from ingress
+func (r *ReconcileAPIMock) RemoveEntryFromIngress(mock *v1alpha1.APIMock) error {
+	ingressK8s := &v1beta1.Ingress{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{
+		Name:      mock.Spec.Selector[v1alpha1.IngressTag],
+		Namespace: mock.Spec.Selector[v1alpha1.NamespaceTag],
+	}, ingressK8s)
+	if err != nil && errors.IsNotFound(err) {
+		error := &v1alpha1.IngressControllerNotFound{Name: mock.Spec.Selector[v1alpha1.IngressTag]}
+		log.Error(error, "Ingress-Controller not found. ", "Service.Namespace", mock.Spec.Selector[v1alpha1.IngressTag], "Service.Name", mock.Spec.Selector[v1alpha1.NamespaceTag])
+		return error
+	}
+	ingressK8s.Spec.Rules = removeEntry(ingressK8s.Spec.Rules, mock.Spec.Host)
+	updateIngErr := r.client.Update(context.TODO(), ingressK8s)
+	if updateIngErr != nil {
+		log.Error(err, "Failed to update ingress", "Ingress.Namespace", ingressK8s.GetNamespace(), "Ingress.Name", ingressK8s.GetName())
+		return err
+	}
+	log.Info("Entry removed from ingress successfully", "Mock.Namespace", mock.Namespace, "Mock.Name", mock.Name)
+	return nil
+}
+
+// remove entry by host
+func removeEntry(rules []v1beta1.IngressRule, host string) []v1beta1.IngressRule {
+	var elIdx = 0
+	for idx, r := range rules {
+		if host == r.Host {
+			elIdx = idx
+			break
+		}
+	}
+	return append(rules[:elIdx], rules[elIdx+1:]...)
+}
+
 // check if host was previously already configured
 func checkHostConflict(ingress *v1beta1.Ingress, mock *v1alpha1.APIMock) bool {
 	for _, r := range ingress.Spec.Rules {
