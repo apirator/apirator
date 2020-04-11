@@ -1,0 +1,64 @@
+apiVersion: apirator.io/v1alpha1
+kind: APIMock
+metadata:
+  name: bets-mock
+spec:
+  serviceDefinition:
+    port: 8000
+    serviceType: ClusterIP
+  watch: true
+  selector:
+    ingress: contour-ingress
+    namespace: apirator
+  host: bets.claudio.com
+  definition: |
+    openapi: 3.0.0
+    servers:
+      - description: APIMock Server
+        url: >-
+          https://apimock.svc.cluster.local
+    info:
+      title: Bets - Players API (4)
+      description: These APIs is part of bets solution. This APIs is responsible to players management. (4)
+      version: 0.0.1
+      contact:
+        email: apiratordev@gmail.com
+      license:
+        name: Apache 2.0
+        url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+    tags:
+      - name: players
+        description: Players management APIs
+    paths:
+      '/api/players/{player-id}':
+        get:
+          operationId: get-mesh-by-id
+          summary: Get Player Details
+          tags:
+            - players
+          parameters:
+            - name: player-id
+              in: path
+              description: Player ID
+              required: true
+              schema:
+                type: string
+          responses:
+            '200':
+              description: 200 response
+              content:
+                application/json:
+                  examples:
+                    joe:
+                      value:
+                        name: Joe Doe (1)
+                        email: joe@doe.com (1)
+            '404':
+              description: 404 response
+              content:
+                application/json:
+                  examples:
+                    error:
+                      value:
+                        code: 404
+                        message: not found
