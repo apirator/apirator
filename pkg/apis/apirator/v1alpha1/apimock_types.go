@@ -24,11 +24,12 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 const (
-	PROVISIONED  = "PROVISIONED"
-	ERROR        = "ERROR"
-	INVALID_OAS  = "INVALID_OAS"
-	IngressTag   = "ingress"
-	NamespaceTag = "namespace"
+	PROVISIONED          = "PROVISIONED"
+	ERROR                = "ERROR"
+	INVALID_OAS          = "INVALID_OAS"
+	IngressTag           = "ingress"
+	NamespaceTag         = "namespace"
+	IngressFinalizerName = "ingress.finalizers.apirator.io"
 )
 
 type Step struct {
@@ -49,6 +50,7 @@ type APIMockSpec struct {
 	Watch             bool              `json:"watch,omitempty"`
 	Selector          map[string]string `json:"selector,omitempty"`
 	Host              string            `json:"host,omitempty"`
+	Initialized       bool              `json:"initialized,omitempty"`
 }
 
 // APIMockStatus defines the observed state of APIMock
@@ -114,4 +116,19 @@ func (in *APIMock) AddFinalizer(finalizerName string) {
 // Remove the desired finalizer
 func (in *APIMock) RemoveFinalizer(finalizerName string) {
 	util.RemoveFinalizer(in, finalizerName)
+}
+
+// check if CR was initialized
+func (in *APIMock) IsInitialized() bool {
+	if in.Spec.Initialized {
+		return true
+	}
+	in.AddFinalizer(IngressFinalizerName)
+	in.Spec.Initialized = true
+	return false
+}
+
+// It describes if the instance has the desired finalizer
+func (in *APIMock) HasFinalizer(finalizerName string) bool {
+	return util.HasFinalizer(in, finalizerName)
 }

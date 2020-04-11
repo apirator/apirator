@@ -9,6 +9,6 @@ function run {
 }
 
 run "operator-sdk build apirator/apirator "
-run "kubectl delete deployment -l app=apirator -n oas "
+run "kubectl delete deployment -l app=apirator -n apirator "
 run "docker push apirator/apirator:latest "
-run "kubectl apply -f deploy/operator.yaml -n oas "
+run "kubectl apply -f deploy/operator.yaml -n apirator "
