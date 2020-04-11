@@ -16,15 +16,15 @@ package apimock
 
 import (
 	"context"
+	"path/filepath"
+
 	"github.com/apirator/apirator/pkg/apis/apirator/v1alpha1"
 	"github.com/apirator/apirator/pkg/controller/k8s/util/labels"
-	"github.com/apirator/apirator/pkg/controller/k8s/util/owner"
 	yu "github.com/ghodss/yaml"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"path/filepath"
 )
 
 const (
@@ -79,14 +79,14 @@ func (r *ReconcileAPIMock) EnsureConfigMap(mock *v1alpha1.APIMock) error {
 				APIVersion: "v1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: mock.Namespace,
-				Name:      mock.GetName(),
-				Labels:    labels.LabelForAPIMock(mock),
+				Name:            mock.GetName(),
+				Namespace:       mock.Namespace,
+				Labels:          labels.LabelForAPIMock(mock),
+				OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(mock, mock.GroupVersionKind())},
 			},
 			Data: map[string]string{filepath.Base(yamlConfigPath): mock.Spec.Definition,
 				filepath.Base(jsonConfigPath): string(bJson)},
 		}
-		owner.AddOwnerRefToObject(cm, owner.AsOwner(&mock.ObjectMeta))
 		err = r.client.Create(context.TODO(), cm)
 		if err != nil {
 			log.Error(err, "Failed to create new ConfigMap", "ConfigMap.Namespace", cm.Namespace, "ConfigMap.Name", cm.Name)
