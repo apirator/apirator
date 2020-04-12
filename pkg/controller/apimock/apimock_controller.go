@@ -107,10 +107,7 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 	if util.IsBeingDeleted(instance) {
 		reqLogger.Info("Deleting APIMock...", "APIMock.Name", instance.GetName())
 		// Everything is ok, there is nothing else to do
-		if !instance.HasFinalizer(apiratorv1alpha1.IngressFinalizerName) {
-			reqLogger.Info("There is nothing to do. Success", "APIMock.Name", instance.GetName())
-			return reconcile.Result{}, nil
-		} else {
+		if instance.HasFinalizer(apiratorv1alpha1.IngressFinalizerName) && instance.ExposeInIngress() {
 			reqLogger.Info("Executing cleanup logic...", "APIMock.Name", instance.GetName())
 			err := r.manageCleanUpLogic(instance)
 			if err != nil {
@@ -126,6 +123,9 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 				return r.ManageError(instance, err)
 			}
 			reqLogger.Info("Finalizers removed successfully", "APIMock.Name", instance.GetName())
+			return reconcile.Result{}, nil
+		} else {
+			reqLogger.Info("There is nothing to do. Success", "APIMock.Name", instance.GetName())
 			return reconcile.Result{}, nil
 		}
 	}

@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"strings"
 )
 
 func (r *ReconcileAPIMock) EnsureIngress(mock *v1alpha1.APIMock, doc *openapi3.Swagger) error {
@@ -94,20 +95,25 @@ func checkHostConflict(ingress *v1beta1.Ingress, mock *v1alpha1.APIMock) bool {
 // create new rule from mock
 func newRule(mock *v1alpha1.APIMock, doc *openapi3.Swagger) v1beta1.IngressRule {
 	var paths []v1beta1.HTTPIngressPath
-	for path := range doc.Paths {
-		inP := v1beta1.HTTPIngressPath{
-			Path: path,
-			Backend: v1beta1.IngressBackend{
-				ServiceName: mock.GetName(),
-				ServicePort: intstr.FromInt(mock.Spec.ServiceDefinition.Port),
-			},
-		}
-		paths = append(paths, inP)
+	inP := v1beta1.HTTPIngressPath{
+		Path: path(doc),
+		Backend: v1beta1.IngressBackend{
+			ServiceName: mock.GetName(),
+			ServicePort: intstr.FromInt(mock.Spec.ServiceDefinition.Port),
+		},
 	}
+	paths = append(paths, inP)
 	igv := &v1beta1.HTTPIngressRuleValue{Paths: paths}
 	irv := v1beta1.IngressRuleValue{HTTP: igv}
 	return v1beta1.IngressRule{
 		Host:             mock.Spec.Host,
 		IngressRuleValue: irv,
 	}
+}
+
+// find the path from API, it will select the first server
+func path(doc *openapi3.Swagger) string {
+	var firstServer = doc.Servers[0]
+	chunk := strings.Split(firstServer.URL, "/")
+	return chunk[len(chunk)] + "*"
 }
