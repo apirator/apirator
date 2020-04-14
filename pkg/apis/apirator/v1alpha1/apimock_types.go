@@ -15,8 +15,8 @@
 package v1alpha1
 
 import (
-	"github.com/redhat-cop/operator-utils/pkg/util"
 	"fmt"
+	"github.com/redhat-cop/operator-utils/pkg/util"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -146,8 +146,11 @@ func (in *APIMock) RemoveFinalizer(finalizerName string) {
 func (in *APIMock) IsInitialized() bool {
 	if in.Spec.Initialized {
 		return true
+	} else {
+		if in.ExposeInIngress() {
+			in.AddFinalizer(IngressFinalizerName)
+		}
 	}
-	in.AddFinalizer(IngressFinalizerName)
 	in.Spec.Initialized = true
 	return false
 }
