@@ -85,8 +85,8 @@ func (in *APIMock) ExposeInIngress() bool {
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=apimocks,scope=Namespaced
 // +kubebuilder:printcolumn:JSONPath=".status.phase",name=Status,type=string
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.cluster-ip",name=CLUSTER-IP,type=string
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.ports",name=PORT(S),type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations['apirator\\.io/cluster-ip']",name=CLUSTER-IP,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations['apirator\\.io/ports']",name=PORT(S),type=string
 type APIMock struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -104,14 +104,14 @@ func (in *APIMock) AnnotatePorts(ports []v1.ServicePort) (updated bool) {
 			p = fmt.Sprintf("%d/%s", port.Port, port.Protocol)
 		}
 	}
-	updated = in.Annotations["ports"] != p
-	in.Annotations["ports"] = p
+	updated = in.Annotations["apirator.io/ports"] != p
+	in.Annotations["apirator.io/ports"] = p
 	return updated
 }
 
 func (in *APIMock) AnnotateClusterIP(ip string) (updated bool) {
-	updated = in.Annotations["cluster-ip"] != ip
-	in.Annotations["cluster-ip"] = ip
+	updated = in.Annotations["apirator.io/cluster-ip"] != ip
+	in.Annotations["apirator.io/cluster-ip"] = ip
 	return updated
 }
 

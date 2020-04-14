@@ -83,10 +83,10 @@ func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
 			if mock.AnnotateClusterIP(svcK8s.Spec.ClusterIP) || mock.AnnotatePorts(svcK8s.Spec.Ports) {
 				err := r.client.Update(context.TODO(), mock)
 				if err != nil {
-					log.Error(err, "Failed to update APIMock annotations", "Service.Namespace", svcK8s.Namespace, "Service.Name", svcK8s.Name, "Service.ClusterIP", mock.Annotations["cluster-ip"], "Service.Ports", mock.Annotations["ports"])
+					log.Error(err, "Failed to update APIMock annotations", "Service.Namespace", svcK8s.Namespace, "Service.Name", svcK8s.Name, "Service.ClusterIP", mock.Annotations["apirator.io/cluster-ip"], "Service.Ports", mock.Annotations["apirator.io/ports"])
 					return err
 				}
-				log.Info("APIMock annotations update successfully", "Service.Namespace", svcK8s.Namespace, "Service.Name", svcK8s.Name, "Service.ClusterIP", mock.Annotations["cluster-ip"], "Service.Ports", mock.Annotations["ports"])
+				log.Info("APIMock annotations update successfully", "Service.Namespace", svcK8s.Namespace, "Service.Name", svcK8s.Name, "Service.ClusterIP", mock.Annotations["apirator.io/cluster-ip"], "Service.Ports", mock.Annotations["apirator.io/ports"])
 			}
 		}
 	} else {

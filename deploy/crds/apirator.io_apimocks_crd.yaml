@@ -7,10 +7,10 @@ spec:
   - JSONPath: .status.phase
     name: Status
     type: string
-  - JSONPath: .metadata.annotations.cluster-ip
+  - JSONPath: .metadata.annotations['apirator\.io/cluster-ip']
     name: CLUSTER-IP
     type: string
-  - JSONPath: .metadata.annotations.ports
+  - JSONPath: .metadata.annotations['apirator\.io/ports']
     name: PORT(S)
     type: string
   group: apirator.io
