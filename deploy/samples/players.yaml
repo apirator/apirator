@@ -1,7 +1,7 @@
 apiVersion: apirator.io/v1alpha1
 kind: APIMock
 metadata:
-  name: bets-mock
+  name: players-mock
 spec:
   serviceDefinition:
     port: 8000
@@ -14,8 +14,8 @@ spec:
         url: >-
           https://apimock.svc.cluster.local
     info:
-      title: Bets - Players API (4)
-      description: These APIs is part of bets solution. This APIs is responsible to players management. (4)
+      title: Bets - Players API
+      description: These APIs is part of bets solution. This APIs is responsible to players management.
       version: 0.0.1
       contact:
         email: apiratordev@gmail.com

@@ -44,7 +44,7 @@ func (r *ReconcileAPIMock) markAsFailure(obj *apirator.APIMock) error {
 
 func (r *ReconcileAPIMock) markAsInvalidOAS(obj *apirator.APIMock) error {
 	log.Info("Updating APIMock with status OAS invalid...", "APIMock.Namespace", obj.Namespace, "APIMock.Name", obj.Name)
-	err := r.updateStatus(obj, apirator.INVALID_OAS)
+	err := r.updateStatus(obj, apirator.InvalidOas)
 	if err != nil {
 		log.Error(err, "Failed to update APIMock with Invalid OAS", "APIMock.Namespace", obj.Namespace, "APIMock.Name", obj.Name)
 		return err

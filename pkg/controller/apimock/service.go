@@ -16,6 +16,7 @@ package apimock
 
 import (
 	"context"
+	"github.com/apirator/apirator/internal/steps"
 
 	"github.com/apirator/apirator/pkg/apis/apirator/v1alpha1"
 	"github.com/apirator/apirator/pkg/controller/k8s/util/labels"
@@ -74,6 +75,7 @@ func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
 				log.Error(err, "Failed to create new Service", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
 				return err
 			}
+			mock.AddStep(steps.NewServiceCreated())
 			log.Info("Service created successfully", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
 			return nil
 		} else if err != nil {

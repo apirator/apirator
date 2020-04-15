@@ -16,6 +16,7 @@ package apimock
 
 import (
 	"context"
+	"github.com/apirator/apirator/internal/steps"
 	"path/filepath"
 
 	"github.com/apirator/apirator/pkg/apis/apirator/v1alpha1"
@@ -92,6 +93,7 @@ func (r *ReconcileAPIMock) EnsureConfigMap(mock *v1alpha1.APIMock) error {
 			log.Error(err, "Failed to create new ConfigMap", "ConfigMap.Namespace", cm.Namespace, "ConfigMap.Name", cm.Name)
 			return err
 		}
+		mock.AddStep(steps.NewConfigMapCreated())
 		log.Info("ConfigMap created successfully", "ConfigMap.Namespace", cm.Namespace, "ConfigMap.Name", cm.Name)
 		return nil
 	} else if err != nil {

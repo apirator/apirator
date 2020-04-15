@@ -25,9 +25,13 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 const (
-	PROVISIONED = "PROVISIONED"
-	ERROR       = "ERROR"
-	INVALID_OAS = "INVALID_OAS"
+	PROVISIONED         = "PROVISIONED"
+	ERROR               = "ERROR"
+	InvalidOas          = "INVALID_OAS"
+	CfgMapCreated       = "ConfigMapCreated"
+	ServiceCreated      = "ServiceCreated"
+	DeploymentCreated   = "DeploymentCreated"
+	IngressEntryCreated = "IngressEntryCreated"
 )
 
 // APIMockSpec defines the desired state of APIMock
@@ -49,6 +53,14 @@ type APIMockStatus struct {
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 	// +kubebuilder:validation:Enum=PROVISIONED;ERROR;INVALID_OAS;
 	Phase string `json:"phase,omitempty"`
+	Steps []Step `json:"steps"`
+}
+
+// phase step
+type Step struct {
+	Action      string      `json:"action,omitempty"`
+	LastUpdate  metav1.Time `json:"lastUpdate,omitempty"`
+	Description string      `json:"description,omitempty"`
 }
 
 type ServiceDefinition struct {
@@ -71,6 +83,10 @@ type APIMock struct {
 
 	Spec   APIMockSpec   `json:"spec,omitempty"`
 	Status APIMockStatus `json:"status,omitempty"`
+}
+
+func (in *APIMock) AddStep(newStep Step) {
+	in.Status.Steps = append(in.Status.Steps, newStep)
 }
 
 func (in *APIMock) AnnotatePorts(ports []v1.ServicePort) (updated bool) {
