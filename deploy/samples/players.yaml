@@ -10,7 +10,7 @@ spec:
   definition: |
     openapi: 3.0.0
     servers:
-      - description: APIMock Server
+      - description: APIMock Server 
         url: >-
           https://apimock.svc.cluster.local
     info:

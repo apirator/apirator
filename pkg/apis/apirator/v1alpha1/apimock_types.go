@@ -32,6 +32,7 @@ const (
 	ServiceCreated      = "ServiceCreated"
 	DeploymentCreated   = "DeploymentCreated"
 	IngressEntryCreated = "IngressEntryCreated"
+	CfgMapUpdated       = "CfgMapUpdated"
 )
 
 // APIMockSpec defines the desired state of APIMock
@@ -85,8 +86,19 @@ type APIMock struct {
 	Status APIMockStatus `json:"status,omitempty"`
 }
 
+// add new step in the mock
 func (in *APIMock) AddStep(newStep Step) {
 	in.Status.Steps = append(in.Status.Steps, newStep)
+}
+
+// check if step is present
+func (in *APIMock) CheckStep(action string) bool {
+	for _, value := range in.Status.Steps {
+		if value.Action == action {
+			return true
+		}
+	}
+	return false
 }
 
 func (in *APIMock) AnnotatePorts(ports []v1.ServicePort) (updated bool) {

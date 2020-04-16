@@ -61,6 +61,7 @@ func (r *ReconcileAPIMock) EnsureConfigMap(mock *v1alpha1.APIMock) error {
 			log.Error(err, "Failed to update ConfigMap", "ConfigMap.Namespace", mock.Namespace, "ConfigMap.Name", mock.Name)
 			return err
 		}
+		mock.AddStep(steps.NewConfigMapUpdated())
 		log.Info("ConfigMap update successfully", "ConfigMap.Namespace", mock.Namespace, "ConfigMap.Name", mock.Name)
 		return nil
 	}
