@@ -27,7 +27,7 @@ func NewConfigMapCreated() v1alpha1.Step {
 
 // create a config map updated step
 func NewConfigMapUpdated() v1alpha1.Step {
-	return newStep(v1alpha1.CfgMapCreated, "Config map created successfully")
+	return newStep(v1alpha1.CfgMapUpdated, "Config map created successfully")
 }
 
 func newStep(action string, description string) v1alpha1.Step {
