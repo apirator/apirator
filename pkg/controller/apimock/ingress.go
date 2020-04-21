@@ -2,6 +2,7 @@ package apimock
 
 import (
 	"context"
+	"github.com/apirator/apirator/internal/steps"
 	"github.com/apirator/apirator/pkg/apis/apirator/v1alpha1"
 	"github.com/getkin/kin-openapi/openapi3"
 	"k8s.io/api/extensions/v1beta1"
@@ -25,22 +26,30 @@ func (r *ReconcileAPIMock) EnsureIngress(mock *v1alpha1.APIMock, doc *openapi3.S
 			return error
 		}
 
-		if checkHostConflict(ingressK8s, mock) {
-			error := &v1alpha1.HostAlreadyExist{
-				Host:    mock.Spec.Host,
-				Ingress: mock.Spec.Selector[v1alpha1.IngressTag],
-			}
-			log.Error(error, "Host already configured. ", "Service.Namespace", mock.Spec.Selector[v1alpha1.IngressTag], "Service.Name", mock.Spec.Selector[v1alpha1.NamespaceTag])
-			return error
-		}
+		log.Info("Checking ingress entries...", "Mock.Namespace", mock.Namespace, "Mock.Name", mock.Name)
 
-		// append new rule in ingress controller. SUCCESS
-		ingressK8s.Spec.Rules = append(ingressK8s.Spec.Rules, newRule(mock, doc))
+		// only check for the new mock
+		if !mock.CheckStep(steps.IngressEntryCreated) {
+			log.Info("Start adding new entry in ingress. Checking hosts...", "Mock.Namespace", mock.Namespace, "Mock.Name", mock.Name)
+			if checkHostConflict(ingressK8s, mock) {
+				error := &v1alpha1.HostAlreadyExist{
+					Host:    mock.Spec.Host,
+					Ingress: mock.Spec.Selector[v1alpha1.IngressTag],
+				}
+				log.Error(error, "Host already configured. ", "Service.Namespace", mock.Spec.Selector[v1alpha1.IngressTag], "Service.Name", mock.Spec.Selector[v1alpha1.NamespaceTag])
+				return error
+			}
+			// append new rule in ingress controller. SUCCESS
+			log.Info("Adding new entry in ingress. Hosts checked everything is ok.", "Mock.Namespace", mock.Namespace, "Mock.Name", mock.Name)
+			ingressK8s.Spec.Rules = append(ingressK8s.Spec.Rules, newRule(mock, doc))
+		} else {
+			log.Info("Ingress was configured previously", "Mock.Namespace", mock.Namespace, "Mock.Name", mock.Name)
+		}
 
 		// update ingress
 		updateIngErr := r.client.Update(context.TODO(), ingressK8s)
 		if updateIngErr != nil {
-			log.Error(err, "Failed to update ingress", "Ingress.Namespace", ingressK8s.GetNamespace(), "Ingress.Name", ingressK8s.GetName())
+			log.Error(err, "[Adding] - Failed to update ingress", "Ingress.Namespace", ingressK8s.GetNamespace(), "Ingress.Name", ingressK8s.GetName())
 			return err
 		}
 		log.Info("Ingress configured successfully", "Mock.Namespace", mock.Namespace, "Mock.Name", mock.Name)
@@ -63,7 +72,7 @@ func (r *ReconcileAPIMock) RemoveEntryFromIngress(mock *v1alpha1.APIMock) error 
 	ingressK8s.Spec.Rules = removeEntry(ingressK8s.Spec.Rules, mock.Spec.Host)
 	updateIngErr := r.client.Update(context.TODO(), ingressK8s)
 	if updateIngErr != nil {
-		log.Error(err, "Failed to update ingress", "Ingress.Namespace", ingressK8s.GetNamespace(), "Ingress.Name", ingressK8s.GetName())
+		log.Error(err, "[Removing] - Failed to update ingress", "Ingress.Namespace", ingressK8s.GetNamespace(), "Ingress.Name", ingressK8s.GetName())
 		return err
 	}
 	log.Info("Entry removed from ingress successfully", "Mock.Namespace", mock.Namespace, "Mock.Name", mock.Name)
@@ -113,7 +122,10 @@ func newRule(mock *v1alpha1.APIMock, doc *openapi3.Swagger) v1beta1.IngressRule 
 
 // find the path from API, it will select the first server
 func path(doc *openapi3.Swagger) string {
+	log.Info("Selecting base path for ingress")
 	var firstServer = doc.Servers[0]
+	log.Info("Server selected", "Mock.Server", firstServer)
 	chunk := strings.Split(firstServer.URL, "/")
-	return chunk[len(chunk)] + "*"
+	log.Info("Path selected", "Mock.Path", chunk[len(chunk)-1])
+	return chunk[len(chunk)-1]
 }

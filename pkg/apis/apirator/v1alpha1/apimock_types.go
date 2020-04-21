@@ -26,9 +26,9 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 const (
-	Provisioned = "Provisioned"
-	Error       = "Error"
-	InvalidOas  = "InvalidOAS"
+	Provisioned          = "Provisioned"
+	Error                = "Error"
+	InvalidOas           = "InvalidOAS"
 	IngressTag           = "ingress"
 	NamespaceTag         = "namespace"
 	IngressFinalizerName = "ingress.finalizers.apirator.io"
@@ -100,36 +100,6 @@ func (in *APIMock) AddStep(newStep Step) {
 	in.Status.Steps = append(in.Status.Steps, newStep)
 }
 
-// check if step is present
-func (in *APIMock) CheckStep(action string) bool {
-	for _, value := range in.Status.Steps {
-		if value.Action == action {
-			return true
-		}
-	}
-	return false
-}
-
-func (in *APIMock) AnnotatePorts(ports []v1.ServicePort) (updated bool) {
-	var p string
-	for _, port := range ports {
-		if len(p) > 0 {
-			p = fmt.Sprintf("%s,%d/%s", p, port.Port, port.Protocol)
-		} else {
-			p = fmt.Sprintf("%d/%s", port.Port, port.Protocol)
-		}
-	}
-	updated = in.Annotations["apirator.io/ports"] != p
-	in.Annotations["apirator.io/ports"] = p
-	return updated
-}
-
-func (in *APIMock) AnnotateClusterIP(ip string) (updated bool) {
-	updated = in.Annotations["apirator.io/cluster-ip"] != ip
-	in.Annotations["apirator.io/cluster-ip"] = ip
-	return updated
-}
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // APIMockList contains a list of APIMock
@@ -173,4 +143,34 @@ func (in *APIMock) IsInitialized() bool {
 // It describes if the instance has the desired finalizer
 func (in *APIMock) HasFinalizer(finalizerName string) bool {
 	return util.HasFinalizer(in, finalizerName)
+}
+
+// check if step is present
+func (in *APIMock) CheckStep(action string) bool {
+	for _, value := range in.Status.Steps {
+		if value.Action == action {
+			return true
+		}
+	}
+	return false
+}
+
+func (in *APIMock) AnnotatePorts(ports []v1.ServicePort) (updated bool) {
+	var p string
+	for _, port := range ports {
+		if len(p) > 0 {
+			p = fmt.Sprintf("%s,%d/%s", p, port.Port, port.Protocol)
+		} else {
+			p = fmt.Sprintf("%d/%s", port.Port, port.Protocol)
+		}
+	}
+	updated = in.Annotations["apirator.io/ports"] != p
+	in.Annotations["apirator.io/ports"] = p
+	return updated
+}
+
+func (in *APIMock) AnnotateClusterIP(ip string) (updated bool) {
+	updated = in.Annotations["apirator.io/cluster-ip"] != ip
+	in.Annotations["apirator.io/cluster-ip"] = ip
+	return updated
 }

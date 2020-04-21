@@ -5,6 +5,7 @@ metadata:
 rules:
 - apiGroups:
   - ""
+  - extensions
   resources:
   - pods
   - services
@@ -12,6 +13,8 @@ rules:
   - events
   - configmaps
   - secrets
+  - ingresses
+  - ingresses/status
   verbs:
   - create
   - delete
@@ -41,12 +44,6 @@ rules:
   - deployments/finalizers
   verbs:
   - update
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  verbs:
-  - get
 - apiGroups:
   - apirator.io
   resources:
