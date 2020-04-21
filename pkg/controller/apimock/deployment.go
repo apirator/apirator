@@ -16,6 +16,7 @@ package apimock
 
 import (
 	"context"
+	"github.com/apirator/apirator/internal/steps"
 
 	"github.com/apirator/apirator/pkg/apis/apirator/v1alpha1"
 	"github.com/apirator/apirator/pkg/controller/k8s/util/labels"
@@ -66,6 +67,7 @@ func (r *ReconcileAPIMock) EnsureDeployment(mock *v1alpha1.APIMock) error {
 			log.Error(err, "Failed to create Deployment")
 			return err
 		}
+		mock.AddStep(steps.NewDeploymentCreated())
 		log.Info("Deployment created successfully", "Deployment.Namespace", d.Namespace, "Deployment.Name", d.Name)
 		return nil
 	} else if err != nil {
