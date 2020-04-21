@@ -7,27 +7,27 @@ import (
 
 // create a deployment created step
 func NewIngressEntryCreated() v1alpha1.Step {
-	return newStep(v1alpha1.IngressEntryCreated, "Ingress entry created successfully")
+	return newStep(IngressEntryCreated, "Ingress entry created successfully")
 }
 
 // create a deployment created step
 func NewDeploymentCreated() v1alpha1.Step {
-	return newStep(v1alpha1.DeploymentCreated, "Deployment created successfully")
+	return newStep(DeploymentCreated, "Deployment created successfully")
 }
 
 // create a service created step
 func NewServiceCreated() v1alpha1.Step {
-	return newStep(v1alpha1.ServiceCreated, "Service created successfully")
+	return newStep(ServiceCreated, "Service created successfully")
 }
 
 // create a config map created step
 func NewConfigMapCreated() v1alpha1.Step {
-	return newStep(v1alpha1.CfgMapCreated, "Config map created successfully")
+	return newStep(CfgMapCreated, "Config map created successfully")
 }
 
 // create a config map updated step
 func NewConfigMapUpdated() v1alpha1.Step {
-	return newStep(v1alpha1.CfgMapUpdated, "Config map created successfully")
+	return newStep(CfgMapUpdated, "Config map updated successfully")
 }
 
 func newStep(action string, description string) v1alpha1.Step {

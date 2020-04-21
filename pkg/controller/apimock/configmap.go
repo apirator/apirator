@@ -47,7 +47,7 @@ func (r *ReconcileAPIMock) EnsureConfigMap(mock *v1alpha1.APIMock) error {
 
 	// the OAS Definition was re-defined. We should update the item definition
 	// https://itnext.io/how-to-automatically-update-your-kubernetes-app-configuration-d750e0ca79ab
-	if !errors.IsNotFound(err) && v1alpha1.PROVISIONED == mock.Status.Phase && mock.Spec.Watch {
+	if !errors.IsNotFound(err) && v1alpha1.Provisioned == mock.Status.Phase && mock.Spec.Watch {
 		log.Info("Starting updating configmap", "ConfigMap.Namespace", mock.Namespace, "ConfigMap.Name", mock.Name)
 		bJson, jsonErr := yu.YAMLToJSON([]byte(mock.Spec.Definition))
 		if jsonErr != nil {
