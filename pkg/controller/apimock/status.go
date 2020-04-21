@@ -22,7 +22,7 @@ import (
 
 func (r *ReconcileAPIMock) markAsSuccessful(obj *apirator.APIMock) error {
 	log.Info("Updating APIMock with status Provisioned...", "APIMock.Namespace", obj.Namespace, "APIMock.Name", obj.Name)
-	err := r.updateStatus(obj, apirator.PROVISIONED)
+	err := r.updateStatus(obj, apirator.Provisioned)
 	if err != nil {
 		log.Error(err, "Failed to update APIMock with Provisioned status", "APIMock.Namespace", obj.Namespace, "APIMock.Name", obj.Name)
 		return err
@@ -33,7 +33,7 @@ func (r *ReconcileAPIMock) markAsSuccessful(obj *apirator.APIMock) error {
 
 func (r *ReconcileAPIMock) markAsFailure(obj *apirator.APIMock) error {
 	log.Info("Updating APIMock with status Error...", "APIMock.Namespace", obj.Namespace, "APIMock.Name", obj.Name)
-	err := r.updateStatus(obj, apirator.ERROR)
+	err := r.updateStatus(obj, apirator.Error)
 	if err != nil {
 		log.Error(err, "Failed to update APIMock with Provisioned status", "APIMock.Namespace", obj.Namespace, "APIMock.Name", obj.Name)
 		return err
@@ -44,7 +44,7 @@ func (r *ReconcileAPIMock) markAsFailure(obj *apirator.APIMock) error {
 
 func (r *ReconcileAPIMock) markAsInvalidOAS(obj *apirator.APIMock) error {
 	log.Info("Updating APIMock with status OAS invalid...", "APIMock.Namespace", obj.Namespace, "APIMock.Name", obj.Name)
-	err := r.updateStatus(obj, apirator.INVALID_OAS)
+	err := r.updateStatus(obj, apirator.InvalidOas)
 	if err != nil {
 		log.Error(err, "Failed to update APIMock with Invalid OAS", "APIMock.Namespace", obj.Namespace, "APIMock.Name", obj.Name)
 		return err

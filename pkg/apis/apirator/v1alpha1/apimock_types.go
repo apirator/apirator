@@ -26,9 +26,9 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 const (
-	PROVISIONED          = "PROVISIONED"
-	ERROR                = "ERROR"
-	INVALID_OAS          = "INVALID_OAS"
+	Provisioned = "Provisioned"
+	Error       = "Error"
+	InvalidOas  = "InvalidOAS"
 	IngressTag           = "ingress"
 	NamespaceTag         = "namespace"
 	IngressFinalizerName = "ingress.finalizers.apirator.io"
@@ -60,7 +60,7 @@ type APIMockStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-	// +kubebuilder:validation:Enum=PROVISIONED;ERROR;INVALID_OAS;
+	// +kubebuilder:validation:Enum=Provisioned;Error;INVALID_OAS;
 	Phase string `json:"phase,omitempty"`
 	Steps []Step `json:"steps"`
 }
@@ -93,6 +93,21 @@ type APIMock struct {
 
 	Spec   APIMockSpec   `json:"spec,omitempty"`
 	Status APIMockStatus `json:"status,omitempty"`
+}
+
+// add new step in the mock
+func (in *APIMock) AddStep(newStep Step) {
+	in.Status.Steps = append(in.Status.Steps, newStep)
+}
+
+// check if step is present
+func (in *APIMock) CheckStep(action string) bool {
+	for _, value := range in.Status.Steps {
+		if value.Action == action {
+			return true
+		}
+	}
+	return false
 }
 
 func (in *APIMock) AnnotatePorts(ports []v1.ServicePort) (updated bool) {
