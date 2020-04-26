@@ -49,11 +49,15 @@ spec:
               type: string
             host:
               type: string
+            initialized:
+              type: boolean
             selector:
               additionalProperties:
                 type: string
               type: object
             serviceDefinition:
+              description: Service Definition it will "link" the mock with created
+                service
               properties:
                 port:
                   type: integer
@@ -78,6 +82,20 @@ spec:
               - Error
               - InvalidOAS
               type: string
+            steps:
+              items:
+                properties:
+                  action:
+                    type: string
+                  description:
+                    type: string
+                  lastUpdate:
+                    format: date-time
+                    type: string
+                type: object
+              type: array
+          required:
+          - steps
           type: object
       type: object
   version: v1alpha1

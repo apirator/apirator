@@ -6,7 +6,7 @@ spec:
   serviceDefinition:
     port: 8000
     serviceType: ClusterIP
-  watch: true
+  watch: false
   selector:
     ingress: contour-ingress
     namespace: apirator

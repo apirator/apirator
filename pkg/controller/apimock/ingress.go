@@ -51,8 +51,10 @@ func (r *ReconcileAPIMock) EnsureIngress(mock *v1alpha1.APIMock, doc *openapi3.S
 		if updateIngErr != nil {
 			log.Error(err, "[Adding] - Failed to update ingress", "Ingress.Namespace", ingressK8s.GetNamespace(), "Ingress.Name", ingressK8s.GetName())
 			return err
+		} else {
+			log.Info("Ingress configured successfully", "Mock.Namespace", mock.Namespace, "Mock.Name", mock.Name)
 		}
-		log.Info("Ingress configured successfully", "Mock.Namespace", mock.Namespace, "Mock.Name", mock.Name)
+		mock.AddStep(steps.NewIngressEntryCreated())
 	}
 	return nil
 }
