@@ -8,7 +8,7 @@ spec:
     serviceType: ClusterIP
   watch: false
   selector:
-    ingress: contour-ingress
+    ingress: traefik-ingress
     namespace: apirator
   host: bets.claudio.com
   definition: |

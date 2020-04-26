@@ -2,6 +2,7 @@ package apimock
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/apirator/apirator/internal/steps"
 	"github.com/apirator/apirator/pkg/apis/apirator/v1alpha1"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -122,12 +123,12 @@ func newRule(mock *v1alpha1.APIMock, doc *openapi3.Swagger) v1beta1.IngressRule 
 	}
 }
 
-// find the path from API, it will select the first server
+// find mock api path
+// https://swagger.io/docs/specification/openapi-extensions/
 func path(doc *openapi3.Swagger) string {
-	log.Info("Selecting base path for ingress")
-	var firstServer = doc.Servers[0]
-	log.Info("Server selected", "Mock.Server", firstServer)
-	chunk := strings.Split(firstServer.URL, "/")
-	log.Info("Path selected", "Mock.Path", chunk[len(chunk)-1])
-	return "/" + chunk[len(chunk)-1]
+	i := doc.Info.Extensions["x-apirator-mock-path"]
+	json := i.(json.RawMessage)
+	path := strings.Trim(string(json), "\"")
+	log.Info("Path", "Mock.Path", path)
+	return path
 }

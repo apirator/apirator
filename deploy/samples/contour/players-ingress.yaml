@@ -1,21 +1,26 @@
 apiVersion: apirator.io/v1alpha1
 kind: APIMock
 metadata:
-  name: players-mock
+  name: players-ingress-mock
 spec:
   serviceDefinition:
     port: 8000
     serviceType: ClusterIP
   watch: false
+  selector:
+    ingress: contour-ingress
+    namespace: apirator
+  host: bets.claudio.com
   definition: |
     openapi: 3.0.0
     servers:
       - description: APIMock Server
         url: >-
-          https://apimock.svc.cluster.local
+          https://apimock.svc.cluster.local/api
     info:
-      title: Bets - Players API (4)
-      description: These APIs is part of bets solution. This APIs is responsible to players management. (4)
+      x-apirator-mock-path: /api/players
+      title: Bets - Players API
+      description: These APIs is part of bets solution. This APIs is responsible to players management.
       version: 0.0.1
       contact:
         email: apiratordev@gmail.com
@@ -26,7 +31,7 @@ spec:
       - name: players
         description: Players management APIs
     paths:
-      '/api/players/{player-id}':
+      '/players':
         get:
           operationId: get-mesh-by-id
           summary: Get Player Details
