@@ -127,5 +127,5 @@ func path(doc *openapi3.Swagger) string {
 	log.Info("Server selected", "Mock.Server", firstServer)
 	chunk := strings.Split(firstServer.URL, "/")
 	log.Info("Path selected", "Mock.Path", chunk[len(chunk)-1])
-	return chunk[len(chunk)-1]
+	return "/" + chunk[len(chunk)-1]
 }
