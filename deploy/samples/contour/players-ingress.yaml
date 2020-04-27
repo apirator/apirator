@@ -1,7 +1,7 @@
 apiVersion: apirator.io/v1alpha1
 kind: APIMock
 metadata:
-  name: players-ingress-mock
+  name: players-ingress-contour
 spec:
   serviceDefinition:
     port: 8000
@@ -31,7 +31,7 @@ spec:
       - name: players
         description: Players management APIs
     paths:
-      '/players':
+      '/api/players/{player-id}':
         get:
           operationId: get-mesh-by-id
           summary: Get Player Details

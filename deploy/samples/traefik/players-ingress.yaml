@@ -1,7 +1,7 @@
 apiVersion: apirator.io/v1alpha1
 kind: APIMock
 metadata:
-  name: players-ingress-mock
+  name: players-ingress-traefik
 spec:
   serviceDefinition:
     port: 8000
@@ -19,6 +19,7 @@ spec:
           https://apimock.svc.cluster.local/players
     info:
       title: Bets - Players API
+      x-apirator-mock-path: /api/players
       description: These APIs is part of bets solution. This APIs is responsible to players management.
       version: 0.0.1
       contact:

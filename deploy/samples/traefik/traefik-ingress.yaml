@@ -6,9 +6,9 @@ metadata:
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
-    - host: traefik-ui.local
-      http:
+    - http:
         paths:
           - backend:
-              serviceName: traefik-web-ui
-              servicePort: 80
+              serviceName: players-mock
+              servicePort: 8000
+            path: /test
