@@ -19,6 +19,7 @@ import (
 	"github.com/apirator/apirator/pkg/controller/oas"
 
 	apiratorv1alpha1 "github.com/apirator/apirator/pkg/apis/apirator/v1alpha1"
+	"github.com/redhat-cop/operator-utils/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -68,12 +69,14 @@ var _ reconcile.Reconciler = &ReconcileAPIMock{}
 type ReconcileAPIMock struct {
 	client client.Client
 	scheme *runtime.Scheme
+	util.ReconcilerBase
 }
 
 func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling APIMock")
 
+	// Get the updated instance
 	instance := &apiratorv1alpha1.APIMock{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
@@ -86,10 +89,51 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	reqLogger.Info("APIMock status", "APIMock.Status", instance.Status.Phase)
+	reqLogger.Info("Starting Reconcile Rules...", "APIMock.IsInitialized", instance.Spec.Initialized)
 
-	if errOas := oas.Validate(instance.Spec.Definition); errOas != nil {
-		log.Error(errOas, "Open API Specification is invalid")
+	// initializing instance
+	if ok := instance.IsInitialized(); !ok {
+		reqLogger.Info("Initializing APIMock...", "APIMock.Name", instance.GetName())
+		err := r.client.Update(context.TODO(), instance)
+		if err != nil {
+			reqLogger.Error(err, "unable to update APIMock", "mock.name", instance.GetName())
+			return r.ManageError(instance, err)
+		}
+		reqLogger.Info("APIMock initialized successfully...", "APIMock.IsInitialized", instance.Spec.Initialized)
+		return reconcile.Result{}, nil
+	}
+
+	// In deletion process (handling exclusion)
+	if util.IsBeingDeleted(instance) {
+		reqLogger.Info("Deleting APIMock...", "APIMock.Name", instance.GetName())
+		// Everything is ok, there is nothing else to do
+		if instance.HasFinalizer(apiratorv1alpha1.IngressFinalizerName) && instance.ExposeInIngress() {
+			reqLogger.Info("Executing cleanup logic...", "APIMock.Name", instance.GetName())
+			err := r.manageCleanUpLogic(instance)
+			if err != nil {
+				log.Error(err, "unable to delete apimock", "mock.name", instance.GetName())
+				return r.ManageError(instance, err)
+			}
+			reqLogger.Info("Cleanup executed successfully", "APIMock.Name", instance.GetName())
+			reqLogger.Info("Removing finalizers...", "APIMock.Name", instance.GetName())
+			instance.RemoveFinalizer(apiratorv1alpha1.IngressFinalizerName)
+			updErr := r.client.Update(context.TODO(), instance)
+			if updErr != nil {
+				reqLogger.Error(err, "unable to update mock", "mock.name", instance.GetName())
+				return r.ManageError(instance, err)
+			}
+			reqLogger.Info("Finalizers removed successfully", "APIMock.Name", instance.GetName())
+			return reconcile.Result{}, nil
+		} else {
+			reqLogger.Info("There is nothing to do. Success", "APIMock.Name", instance.GetName())
+			return reconcile.Result{}, nil
+		}
+	}
+
+	reqLogger.Info("Starting configuration logic...", "APIMock.IsInitialized", instance.Spec.Initialized)
+	doc, errOas := oas.Validate(instance.Spec.Definition)
+	if errOas != nil {
+		reqLogger.Error(errOas, "Open API Specification is invalid")
 		if err := r.markAsInvalidOAS(instance); err != nil {
 			return reconcile.Result{}, err
 		}
@@ -112,6 +156,13 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	svcErr := r.EnsureService(instance)
 	if svcErr != nil {
+		if err := r.markAsFailure(instance); err != nil {
+			return reconcile.Result{}, err
+		}
+	}
+
+	ingErr := r.EnsureIngress(instance, doc)
+	if ingErr != nil {
 		if err := r.markAsFailure(instance); err != nil {
 			return reconcile.Result{}, err
 		}

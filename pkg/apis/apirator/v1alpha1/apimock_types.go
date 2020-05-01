@@ -16,6 +16,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"github.com/redhat-cop/operator-utils/pkg/util"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,10 +26,19 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 const (
-	Provisioned = "Provisioned"
-	Error       = "Error"
-	InvalidOas  = "InvalidOAS"
+	Provisioned          = "Provisioned"
+	Error                = "Error"
+	InvalidOas           = "InvalidOAS"
+	IngressTag           = "ingress"
+	NamespaceTag         = "namespace"
+	IngressFinalizerName = "ingress.finalizers.apirator.io"
 )
+
+type Step struct {
+	Action      string      `json:"action,omitempty"`
+	LastUpdate  metav1.Time `json:"lastUpdate,omitempty"`
+	Description string      `json:"description,omitempty"`
+}
 
 // APIMockSpec defines the desired state of APIMock
 // +kubebuilder:subresource:status
@@ -40,6 +50,9 @@ type APIMockSpec struct {
 	Definition        string            `json:"definition,omitempty"`
 	ServiceDefinition ServiceDefinition `json:"serviceDefinition,omitempty"`
 	Watch             bool              `json:"watch,omitempty"`
+	Selector          map[string]string `json:"selector,omitempty"`
+	Host              string            `json:"host,omitempty"`
+	Initialized       bool              `json:"initialized,omitempty"`
 }
 
 // APIMockStatus defines the observed state of APIMock
@@ -47,21 +60,22 @@ type APIMockStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-	// +kubebuilder:validation:Enum=Provisioned;Error;INVALID_OAS;
+	// +kubebuilder:validation:Enum=Provisioned;Error;InvalidOAS;
 	Phase string `json:"phase,omitempty"`
 	Steps []Step `json:"steps"`
 }
 
-// phase step
-type Step struct {
-	Action      string      `json:"action,omitempty"`
-	LastUpdate  metav1.Time `json:"lastUpdate,omitempty"`
-	Description string      `json:"description,omitempty"`
-}
-
+// Service Definition it will "link" the mock with created service
 type ServiceDefinition struct {
 	Port        int            `json:"port,omitempty"`
 	ServiceType v1.ServiceType `json:"serviceType,omitempty"`
+}
+
+// It indicates if apimock will be exposed in ingress-controller
+func (in *APIMock) ExposeInIngress() bool {
+	it := in.Spec.Selector[IngressTag]
+	ns := in.Spec.Selector[NamespaceTag]
+	return len(it) > 0 && len(ns) > 0
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -84,6 +98,51 @@ type APIMock struct {
 // add new step in the mock
 func (in *APIMock) AddStep(newStep Step) {
 	in.Status.Steps = append(in.Status.Steps, newStep)
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// APIMockList contains a list of APIMock
+type APIMockList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []APIMock `json:"items"`
+}
+
+func init() {
+	SchemeBuilder.Register(&APIMock{}, &APIMockList{})
+}
+
+// ================================================================
+//                        Domain functions
+// ================================================================
+
+// Add the desired finalizer
+func (in *APIMock) AddFinalizer(finalizerName string) {
+	util.AddFinalizer(in, finalizerName)
+}
+
+// Remove the desired finalizer
+func (in *APIMock) RemoveFinalizer(finalizerName string) {
+	util.RemoveFinalizer(in, finalizerName)
+}
+
+// check if CR was initialized
+func (in *APIMock) IsInitialized() bool {
+	if in.Spec.Initialized {
+		return true
+	} else {
+		if in.ExposeInIngress() {
+			in.AddFinalizer(IngressFinalizerName)
+		}
+	}
+	in.Spec.Initialized = true
+	return false
+}
+
+// It describes if the instance has the desired finalizer
+func (in *APIMock) HasFinalizer(finalizerName string) bool {
+	return util.HasFinalizer(in, finalizerName)
 }
 
 // check if step is present
@@ -114,17 +173,4 @@ func (in *APIMock) AnnotateClusterIP(ip string) (updated bool) {
 	updated = in.Annotations["apirator.io/cluster-ip"] != ip
 	in.Annotations["apirator.io/cluster-ip"] = ip
 	return updated
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// APIMockList contains a list of APIMock
-type APIMockList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []APIMock `json:"items"`
-}
-
-func init() {
-	SchemeBuilder.Register(&APIMock{}, &APIMockList{})
 }

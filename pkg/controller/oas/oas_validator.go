@@ -21,18 +21,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-func Validate(definition string) error {
+// validate and converts the OpenAPI definition
+func Validate(definition string) (*openapi3.Swagger, error) {
 	doc := &openapi3.Swagger{}
 	err := yaml.Unmarshal([]byte(definition), doc)
+
 	if err != nil {
 		log.Log.Error(err, "Error to parse yaml to oas")
-		return err
+		return nil, err
 	}
 	oasErr := doc.Validate(context.TODO())
 	if oasErr != nil {
 		log.Log.Error(oasErr, "Open API Specification is invalid")
-		return err
+		return nil, err
 	}
 	log.Log.Info("Open API Specification is VALID")
-	return nil
+	return doc, nil
 }

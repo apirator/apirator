@@ -1,21 +1,26 @@
 apiVersion: apirator.io/v1alpha1
 kind: APIMock
 metadata:
-  name: players-mock
+  name: players-ingress-traefik
 spec:
   serviceDefinition:
     port: 8000
     serviceType: ClusterIP
   watch: false
+  selector:
+    ingress: traefik-ingress
+    namespace: apirator
+  host: bets.claudio.com
   definition: |
     openapi: 3.0.0
     servers:
       - description: APIMock Server
         url: >-
-          https://apimock.svc.cluster.local
+          https://apimock.svc.cluster.local/players
     info:
-      title: Bets - Players API (4)
-      description: These APIs is part of bets solution. This APIs is responsible to players management. (4)
+      title: Bets - Players API
+      x-apirator-mock-path: /api/players
+      description: These APIs is part of bets solution. This APIs is responsible to players management.
       version: 0.0.1
       contact:
         email: apiratordev@gmail.com
