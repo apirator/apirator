@@ -52,6 +52,17 @@ func (r *ReconcileAPIMock) markAsInvalidOAS(obj *apirator.APIMock) error {
 	return nil
 }
 
+func (r *ReconcileAPIMock) markUpdateAnnotations(obj *apirator.APIMock) error {
+	log.Info("Updating APIMock with WaitingAnnotations...", "APIMock.Namespace", obj.Namespace, "APIMock.Name", obj.Name)
+	err := r.updateStatus(obj, apirator.WaitingAnnotations)
+	if err != nil {
+		log.Error(err, "Failed to update APIMock with WaitingAnnotations status", "APIMock.Namespace", obj.Namespace, "APIMock.Name", obj.Name)
+		return err
+	}
+	log.Info("Status WaitingAnnotations update successfully", "APIMock.Namespace", obj.Namespace, "APIMock.Name", obj.Name)
+	return nil
+}
+
 func (r *ReconcileAPIMock) updateStatus(obj *apirator.APIMock, status string) error {
 	obj.Status.Phase = status
 	err := r.client.Status().Update(context.Background(), obj)

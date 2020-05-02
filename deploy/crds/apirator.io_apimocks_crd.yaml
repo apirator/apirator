@@ -81,6 +81,7 @@ spec:
               - Provisioned
               - Error
               - InvalidOAS
+              - WaitingAnnotations
               type: string
             steps:
               items:

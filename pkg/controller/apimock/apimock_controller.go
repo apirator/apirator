@@ -132,6 +132,25 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 	}
 
 	reqLogger.Info("Starting configuration logic...", "APIMock.IsInitialized", instance.Spec.Initialized)
+
+	// only update the annotations
+	if apiratorv1alpha1.WaitingAnnotations == instance.Status.Phase {
+		updated, err := r.processAnnotations(instance)
+		if updated {
+			if err := r.client.Update(context.TODO(), instance); err != nil {
+				reqLogger.Error(err, "Error on update mock")
+				return reconcile.Result{}, err
+			}
+			if err := r.markAsSuccessful(instance); err != nil {
+				return reconcile.Result{}, err
+			}
+			return reconcile.Result{}, nil
+		}
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+	}
+
 	doc, errOas := oas.Validate(instance.Spec.Definition)
 	if errOas != nil {
 		reqLogger.Error(errOas, "Open API Specification is invalid")
@@ -177,12 +196,11 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	// updated the instance
-	if updatedCfgMap || updatedSvc {
-		reqLogger.Info("Updating mock. Something is different...", "APIMock.Name", instance.GetName())
-		if err := r.client.Update(context.TODO(), instance); err != nil {
-			reqLogger.Error(err, "Error on update mock")
+	if updatedSvc {
+		if err := r.markUpdateAnnotations(instance); err != nil {
 			return reconcile.Result{}, err
+		} else {
+			return reconcile.Result{Requeue: true}, nil
 		}
 	}
 

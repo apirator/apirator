@@ -14,7 +14,7 @@ spec:
         url: >-
           https://apimock.svc.cluster.local
     info:
-      title: Bets - Players API (8)(11)
+      title: Bets - Players API (8)(40)
       x-apirator-mock-path: /api/players
       description: These APIs is part of bets solution. This APIs is responsible to players management.
       version: 0.0.1

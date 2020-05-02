@@ -81,11 +81,6 @@ func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) (updated bool, 
 		} else if err != nil {
 			log.Error(err, "Failed to get Service")
 			return false, err
-		} else {
-			if mock.AnnotateClusterIP(svcK8s.Spec.ClusterIP) || mock.AnnotatePorts(svcK8s.Spec.Ports) {
-				log.Info("APIMock annotations update successfully", "Service.Namespace", svcK8s.Namespace, "Service.Name", svcK8s.Name, "Service.ClusterIP", mock.Annotations["apirator.io/cluster-ip"], "Service.Ports", mock.Annotations["apirator.io/ports"])
-				return true, nil
-			}
 		}
 	} else {
 		log.Info("Service is not necessary")
