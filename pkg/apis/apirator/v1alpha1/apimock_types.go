@@ -174,3 +174,8 @@ func (in *APIMock) AnnotateClusterIP(ip string) (updated bool) {
 	in.Annotations["apirator.io/cluster-ip"] = ip
 	return updated
 }
+
+// count steps
+func (in *APIMock) CountSteps() int {
+	return len(in.Status.Steps)
+}

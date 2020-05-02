@@ -17,6 +17,7 @@ package apimock
 import (
 	"context"
 	"github.com/apirator/apirator/pkg/controller/oas"
+	resources "github.com/apirator/apirator/pkg/controller/predicates"
 
 	apiratorv1alpha1 "github.com/apirator/apirator/pkg/apis/apirator/v1alpha1"
 	"github.com/redhat-cop/operator-utils/pkg/util"
@@ -48,7 +49,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &apiratorv1alpha1.APIMock{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &apiratorv1alpha1.APIMock{}}, &handler.EnqueueRequestForObject{}, resources.StatusChangedPredicate{})
 	if err != nil {
 		return err
 	}
@@ -140,7 +141,7 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, errOas
 	}
 
-	cfmErr := r.EnsureConfigMap(instance)
+	updatedCfgMap, cfmErr := r.EnsureConfigMap(instance)
 	if cfmErr != nil {
 		if err := r.markAsFailure(instance); err != nil {
 			return reconcile.Result{}, err
@@ -154,7 +155,7 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 	}
 
-	svcErr := r.EnsureService(instance)
+	updatedSvc, svcErr := r.EnsureService(instance)
 	if svcErr != nil {
 		if err := r.markAsFailure(instance); err != nil {
 			return reconcile.Result{}, err
@@ -168,8 +169,21 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 	}
 
+	reqLogger.Info("Should update by cfgmap", "ConfigMap", updatedCfgMap)
+	reqLogger.Info("Should update by SVC", "Service", updatedSvc)
+
+	// update the final status
 	if err := r.markAsSuccessful(instance); err != nil {
 		return reconcile.Result{}, err
+	}
+
+	// updated the instance
+	if updatedCfgMap || updatedSvc {
+		reqLogger.Info("Updating mock. Something is different...", "APIMock.Name", instance.GetName())
+		if err := r.client.Update(context.TODO(), instance); err != nil {
+			reqLogger.Error(err, "Error on update mock")
+			return reconcile.Result{}, err
+		}
 	}
 
 	return reconcile.Result{}, nil

@@ -33,7 +33,7 @@ const (
 	jsonConfigPath = "/etc/oas/oas.json"
 )
 
-func (r *ReconcileAPIMock) EnsureConfigMap(mock *v1alpha1.APIMock) error {
+func (r *ReconcileAPIMock) EnsureConfigMap(mock *v1alpha1.APIMock) (update bool, errRet error) {
 	// find the configmap element
 	cMap := &v1.ConfigMap{}
 
@@ -52,54 +52,66 @@ func (r *ReconcileAPIMock) EnsureConfigMap(mock *v1alpha1.APIMock) error {
 		bJson, jsonErr := yu.YAMLToJSON([]byte(mock.Spec.Definition))
 		if jsonErr != nil {
 			log.Error(err, "[UPDATE] - Failed to read oas spec in json model", "APIMock.Namespace", mock.Namespace, "APIMock.Name", mock.Name)
-			return err
+			return false, err
 		}
-		cMap.Data = map[string]string{filepath.Base(yamlConfigPath): mock.Spec.Definition,
-			filepath.Base(jsonConfigPath): string(bJson)}
-		updErr := r.client.Update(context.TODO(), cMap)
-		if updErr != nil {
-			log.Error(err, "Failed to update ConfigMap", "ConfigMap.Namespace", mock.Namespace, "ConfigMap.Name", mock.Name)
-			return err
+		// check is the configmap is the same value
+		if cMap.Data[jsonConfigPath] != string(bJson) {
+			log.Info("Updating configmap, content is not identical...", "ConfigMap.Namespace", mock.Namespace, "ConfigMap.Name", mock.Name)
+			cMap.Data = map[string]string{filepath.Base(yamlConfigPath): mock.Spec.Definition,
+				filepath.Base(jsonConfigPath): string(bJson)}
+			updErr := r.client.Update(context.TODO(), cMap)
+			if updErr != nil {
+				log.Error(err, "Failed to update ConfigMap", "ConfigMap.Namespace", mock.Namespace, "ConfigMap.Name", mock.Name)
+				return false, err
+			}
+			mock.AddStep(steps.NewConfigMapUpdated())
+			log.Info("ConfigMap update successfully", "ConfigMap.Namespace", mock.Namespace, "ConfigMap.Name", mock.Name)
+			return true, nil
+		} else {
+			log.Info("ConfigMap didn't change.Continue..", "ConfigMap.Namespace", mock.Namespace, "ConfigMap.Name", mock.Name)
 		}
-		mock.AddStep(steps.NewConfigMapUpdated())
-		log.Info("ConfigMap update successfully", "ConfigMap.Namespace", mock.Namespace, "ConfigMap.Name", mock.Name)
-		return nil
+		return false, nil
 	}
 
 	// The first interaction. Things should be created.
 	if err != nil && errors.IsNotFound(err) {
 		log.Info("ConfigMap not found. Starting creation...", "ConfigMap.Namespace", mock.Namespace, "ConfigMap.Name", mock.Name)
-
 		bJson, jsonErr := yu.YAMLToJSON([]byte(mock.Spec.Definition))
 		if jsonErr != nil {
 			log.Error(err, "[CREATE] - Failed to read oas spec in json model", "APIMock.Namespace", mock.Namespace, "APIMock.Name", mock.Name)
-			return err
+			return false, err
 		}
-		cm := &v1.ConfigMap{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "ConfigMap",
-				APIVersion: "v1",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:            mock.GetName(),
-				Namespace:       mock.Namespace,
-				Labels:          labels.LabelForAPIMock(mock),
-				OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(mock, mock.GroupVersionKind())},
-			},
-			Data: map[string]string{filepath.Base(yamlConfigPath): mock.Spec.Definition,
-				filepath.Base(jsonConfigPath): string(bJson)},
-		}
+		cm := createConfigMap(mock, bJson)
 		err = r.client.Create(context.TODO(), cm)
 		if err != nil {
 			log.Error(err, "Failed to create new ConfigMap", "ConfigMap.Namespace", cm.Namespace, "ConfigMap.Name", cm.Name)
-			return err
+			return false, err
 		}
 		mock.AddStep(steps.NewConfigMapCreated())
 		log.Info("ConfigMap created successfully", "ConfigMap.Namespace", cm.Namespace, "ConfigMap.Name", cm.Name)
-		return nil
+		return true, nil
 	} else if err != nil {
 		log.Error(err, "Failed to get ConfigMap")
-		return err
+		return false, err
 	}
-	return nil
+	return false, nil
+}
+
+// create the configmap
+func createConfigMap(mock *v1alpha1.APIMock, bJson []byte) *v1.ConfigMap {
+	cm := &v1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            mock.GetName(),
+			Namespace:       mock.Namespace,
+			Labels:          labels.LabelForAPIMock(mock),
+			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(mock, mock.GroupVersionKind())},
+		},
+		Data: map[string]string{filepath.Base(yamlConfigPath): mock.Spec.Definition,
+			filepath.Base(jsonConfigPath): string(bJson)},
+	}
+	return cm
 }

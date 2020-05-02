@@ -32,7 +32,7 @@ const (
 	docsPortName = "docs"
 )
 
-func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
+func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) (updated bool, error error) {
 	svcPresent := mock.Spec.ServiceDefinition.Port != 0
 	if svcPresent {
 		svcK8s := &v1.Service{}
@@ -73,26 +73,22 @@ func (r *ReconcileAPIMock) EnsureService(mock *v1alpha1.APIMock) error {
 			err := r.client.Create(context.TODO(), svc)
 			if err != nil {
 				log.Error(err, "Failed to create new Service", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
-				return err
+				return false, err
 			}
 			mock.AddStep(steps.NewServiceCreated())
 			log.Info("Service created successfully", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
-			return nil
+			return true, nil
 		} else if err != nil {
 			log.Error(err, "Failed to get Service")
-			return err
+			return false, err
 		} else {
 			if mock.AnnotateClusterIP(svcK8s.Spec.ClusterIP) || mock.AnnotatePorts(svcK8s.Spec.Ports) {
-				err := r.client.Update(context.TODO(), mock)
-				if err != nil {
-					log.Error(err, "Failed to update APIMock annotations", "Service.Namespace", svcK8s.Namespace, "Service.Name", svcK8s.Name, "Service.ClusterIP", mock.Annotations["apirator.io/cluster-ip"], "Service.Ports", mock.Annotations["apirator.io/ports"])
-					return err
-				}
 				log.Info("APIMock annotations update successfully", "Service.Namespace", svcK8s.Namespace, "Service.Name", svcK8s.Name, "Service.ClusterIP", mock.Annotations["apirator.io/cluster-ip"], "Service.Ports", mock.Annotations["apirator.io/ports"])
+				return true, nil
 			}
 		}
 	} else {
 		log.Info("Service is not necessary")
 	}
-	return nil
+	return false, nil
 }

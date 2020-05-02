@@ -6,16 +6,17 @@ spec:
   serviceDefinition:
     port: 8000
     serviceType: ClusterIP
-  watch: false
+  watch: true
   definition: |
     openapi: 3.0.0
     servers:
-      - description: APIMock Server
+      - description: APIMock Server (4)
         url: >-
           https://apimock.svc.cluster.local
     info:
-      title: Bets - Players API (4)
-      description: These APIs is part of bets solution. This APIs is responsible to players management. (4)
+      title: Bets - Players API (8)(11)
+      x-apirator-mock-path: /api/players
+      description: These APIs is part of bets solution. This APIs is responsible to players management.
       version: 0.0.1
       contact:
         email: apiratordev@gmail.com
