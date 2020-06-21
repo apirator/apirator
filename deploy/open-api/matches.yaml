@@ -1,0 +1,39 @@
+openapi: 3.0.0
+info:
+  title: Bets - Matches API
+  version: 2.0.0
+paths:
+  "/api/matches/{match-id}":
+    get:
+      operationId: get-match-by-id
+      summary: Get Match Details
+      tags:
+        - matches
+      parameters:
+        - name: match-id
+          in: path
+          description: Match ID
+          required: true
+          schema:
+            type: string
+            format: string
+      responses:
+        '200':
+          description: 200 response
+          content:
+            application/json:
+              examples:
+                data:
+                  value:
+                    homeTeam: Barcelona
+                    awayTeam: Real Madrid
+                    championship: UEFA Champions League
+        '404':
+          description: 404 response
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    code: 404
+                    message: not found

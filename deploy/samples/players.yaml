@@ -10,11 +10,11 @@ spec:
   definition: |
     openapi: 3.0.0
     servers:
-      - description: APIMock Server (4)
+      - description: APIMock Server
         url: >-
           https://apimock.svc.cluster.local
     info:
-      title: Bets - Players API (8)(40)
+      title: Bets - Players API
       x-apirator-mock-path: /api/players
       description: These APIs is part of bets solution. This APIs is responsible to players management.
       version: 0.0.1
@@ -29,7 +29,7 @@ spec:
     paths:
       '/api/players/{player-id}':
         get:
-          operationId: get-mesh-by-id
+          operationId: get-players-by-id
           summary: Get Player Details
           tags:
             - players
@@ -48,8 +48,8 @@ spec:
                   examples:
                     joe:
                       value:
-                        name: Joe Doe (1)
-                        email: joe@doe.com (1)
+                        name: Joe Doe
+                        email: joe@doe.com
             '404':
               description: 404 response
               content:

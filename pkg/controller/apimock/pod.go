@@ -48,7 +48,7 @@ func BuildPodTemplate(mock *v1alpha1.APIMock) v1.PodTemplateSpec {
 			Labels:    labels.LabelForAPIMock(mock),
 		},
 		Spec: v1.PodSpec{
-			Containers: []v1.Container{mockContainer(mock), docContainer()},
+			Containers: []v1.Container{mockContainer(mock), docContainer(mock)},
 			Volumes:    volumes,
 		},
 	}
@@ -104,7 +104,7 @@ func mockContainer(mock *v1alpha1.APIMock) v1.Container {
 }
 
 // create documentation container, it will used for display the swagger-ui
-func docContainer() v1.Container {
+func docContainer(mock *v1alpha1.APIMock) v1.Container {
 	var ports []v1.ContainerPort
 	ports = append(ports, v1.ContainerPort{
 		ContainerPort: docPort,
@@ -118,13 +118,17 @@ func docContainer() v1.Container {
 		Name:  "SWAGGER_JSON",
 		Value: "/etc/oas/oas.json",
 	}
+	baseUrl := v1.EnvVar{
+		Name:  "BASE_URL",
+		Value: "/" + mock.GetName() + "/docs",
+	}
 	return v1.Container{
 		Name:         docContainerName,
 		Image:        docImageName,
 		VolumeMounts: volumeMount(),
 		Ports:        ports,
 		Resources:    requirements(),
-		Env:          []v1.EnvVar{cnPort, oasPath},
+		Env:          []v1.EnvVar{cnPort, oasPath, baseUrl},
 	}
 
 }
