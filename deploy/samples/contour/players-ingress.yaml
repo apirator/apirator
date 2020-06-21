@@ -16,7 +16,7 @@ spec:
     servers:
       - description: APIMock Server
         url: >-
-          https://apimock.svc.cluster.local/api
+          http://players-ingress-contour.apirator.svc.cluster.local
     info:
       x-apirator-mock-path: /api/players
       title: Bets - Players API

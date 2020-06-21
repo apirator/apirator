@@ -16,6 +16,8 @@ package v1alpha1
 
 import (
 	"fmt"
+	"github.com/apirator/apirator/pkg/controller/oas"
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/redhat-cop/operator-utils/pkg/util"
 
 	v1 "k8s.io/api/core/v1"
@@ -173,6 +175,33 @@ func (in *APIMock) AnnotatePorts(ports []v1.ServicePort) (updated bool) {
 func (in *APIMock) AnnotateClusterIP(ip string) (updated bool) {
 	updated = in.Annotations["apirator.io/cluster-ip"] != ip
 	in.Annotations["apirator.io/cluster-ip"] = ip
+	return updated
+}
+
+func (in *APIMock) AnnotateAddress(loadBalanceIP string) (updated bool) {
+	if len(loadBalanceIP) > 0 {
+		address := loadBalanceIP + "/" + in.path()
+		updated = in.Annotations["apirator.io/address"] != address
+		in.Annotations["apirator.io/address"] = address
+		return updated
+	}
+	return false
+}
+
+func (in *APIMock) AnnotatePath(doc *openapi3.Swagger) {
+	path := oas.Path(doc)
+	if len(path) > 0 {
+		in.Annotations["apirator.io/mock-path"] = path
+	}
+}
+
+func (in *APIMock) path() string {
+	return in.Annotations["apirator.io/mock-path"]
+}
+
+func (in *APIMock) AnnotateIngress(ip string) (updated bool) {
+	updated = in.Annotations["apirator.io/ingress-ip"] != ip
+	in.Annotations["apirator.io/ingress-ip"] = ip
 	return updated
 }
 

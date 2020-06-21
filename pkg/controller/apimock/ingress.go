@@ -2,15 +2,14 @@ package apimock
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/apirator/apirator/internal/steps"
 	"github.com/apirator/apirator/pkg/apis/apirator/v1alpha1"
+	"github.com/apirator/apirator/pkg/controller/oas"
 	"github.com/getkin/kin-openapi/openapi3"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"strings"
 )
 
 func (r *ReconcileAPIMock) EnsureIngress(mock *v1alpha1.APIMock, doc *openapi3.Swagger) error {
@@ -26,9 +25,7 @@ func (r *ReconcileAPIMock) EnsureIngress(mock *v1alpha1.APIMock, doc *openapi3.S
 			log.Error(error, "Ingress-Controller not found. ", "Service.Namespace", mock.Spec.Selector[v1alpha1.IngressTag], "Service.Name", mock.Spec.Selector[v1alpha1.NamespaceTag])
 			return error
 		}
-
 		log.Info("Checking ingress entries...", "Mock.Namespace", mock.Namespace, "Mock.Name", mock.Name)
-
 		// only check for the new mock
 		if !mock.CheckStep(steps.IngressEntryCreated) {
 			log.Info("Start adding new entry in ingress. Checking hosts...", "Mock.Namespace", mock.Namespace, "Mock.Name", mock.Name)
@@ -108,13 +105,13 @@ func checkHostConflict(ingress *v1beta1.Ingress, mock *v1alpha1.APIMock) bool {
 func newRule(mock *v1alpha1.APIMock, doc *openapi3.Swagger) v1beta1.IngressRule {
 	var paths []v1beta1.HTTPIngressPath
 	inP := v1beta1.HTTPIngressPath{
-		Path: path(doc),
+		Path: oas.Path(doc),
 		Backend: v1beta1.IngressBackend{
 			ServiceName: mock.GetName(),
 			ServicePort: intstr.FromInt(mock.Spec.ServiceDefinition.Port),
 		},
 	}
-	paths = append(paths, inP)
+	paths = append(paths, inP, pathForDocs(mock))
 	igv := &v1beta1.HTTPIngressRuleValue{Paths: paths}
 	irv := v1beta1.IngressRuleValue{HTTP: igv}
 	return v1beta1.IngressRule{
@@ -123,12 +120,13 @@ func newRule(mock *v1alpha1.APIMock, doc *openapi3.Swagger) v1beta1.IngressRule 
 	}
 }
 
-// find mock api path
-// https://swagger.io/docs/specification/openapi-extensions/
-func path(doc *openapi3.Swagger) string {
-	i := doc.Info.Extensions["x-apirator-mock-path"]
-	json := i.(json.RawMessage)
-	path := strings.Trim(string(json), "\"")
-	log.Info("Path", "Mock.Path", path)
-	return path
+// create new rule from open api docs
+func pathForDocs(mock *v1alpha1.APIMock) v1beta1.HTTPIngressPath {
+	return v1beta1.HTTPIngressPath{
+		Path: "/" + mock.GetName() + "/docs/",
+		Backend: v1beta1.IngressBackend{
+			ServiceName: mock.GetName(),
+			ServicePort: intstr.FromInt(8080),
+		},
+	}
 }

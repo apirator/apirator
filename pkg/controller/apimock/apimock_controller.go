@@ -92,9 +92,19 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	reqLogger.Info("Starting Reconcile Rules...", "APIMock.IsInitialized", instance.Spec.Initialized)
 
+	doc, errOas := oas.Validate(instance.Spec.Definition)
+	if errOas != nil {
+		reqLogger.Error(errOas, "Open API Specification is invalid")
+		if err := r.markAsInvalidOAS(instance); err != nil {
+			return reconcile.Result{}, err
+		}
+		return reconcile.Result{}, errOas
+	}
+
 	// initializing instance
 	if ok := instance.IsInitialized(); !ok {
 		reqLogger.Info("Initializing APIMock...", "APIMock.Name", instance.GetName())
+		instance.AnnotatePath(doc)
 		err := r.client.Update(context.TODO(), instance)
 		if err != nil {
 			reqLogger.Error(err, "unable to update APIMock", "mock.name", instance.GetName())
@@ -149,15 +159,6 @@ func (r *ReconcileAPIMock) Reconcile(request reconcile.Request) (reconcile.Resul
 		if err != nil {
 			return reconcile.Result{}, err
 		}
-	}
-
-	doc, errOas := oas.Validate(instance.Spec.Definition)
-	if errOas != nil {
-		reqLogger.Error(errOas, "Open API Specification is invalid")
-		if err := r.markAsInvalidOAS(instance); err != nil {
-			return reconcile.Result{}, err
-		}
-		return reconcile.Result{}, errOas
 	}
 
 	updatedCfgMap, cfmErr := r.EnsureConfigMap(instance)

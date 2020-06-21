@@ -1,0 +1,40 @@
+---
+openapi: 3.0.0
+info:
+  title: Bets - Championships API
+  version: 2.0.0
+paths:
+  "/api/championships/{championship-id}":
+    get:
+      operationId: get-championship-by-id
+      summary: Get Championship Details
+      tags:
+        - championships
+      parameters:
+        - name: championship-id
+          in: path
+          description: Championship ID
+          required: true
+          schema:
+            type: string
+            format: string
+      responses:
+        '200':
+          description: 200 response
+          content:
+            application/json:
+              examples:
+                data:
+                  value:
+                    name: UEFA Champions League
+                    title: Champions League
+                    country: World
+        '404':
+          description: 404 response
+          content:
+            application/json:
+              examples:
+                error:
+                  value:
+                    code: 404
+                    message: not found
