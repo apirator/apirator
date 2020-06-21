@@ -10,9 +10,7 @@ import (
 )
 
 func (r *ReconcileAPIMock) processAnnotations(mock *apirator.APIMock) (updated bool, err error) {
-	var updateByIP = false
-	var updateByPort = false
-	var updateByIng = false
+	updateByIP, updateByPort, updateByIng := false, false, false
 	svcPresent := mock.Spec.ServiceDefinition.Port != 0
 	if svcPresent {
 		svcK8s := &v1.Service{}

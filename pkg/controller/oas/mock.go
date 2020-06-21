@@ -10,7 +10,7 @@ import (
 // https://swagger.io/docs/specification/openapi-extensions/
 func Path(doc *openapi3.Swagger) string {
 	i := doc.Info.Extensions["x-apirator-mock-path"]
-	json := i.(json.RawMessage)
-	path := strings.Trim(string(json), "\"")
+	jd := i.(json.RawMessage)
+	path := strings.Trim(string(jd), "\"")
 	return path
 }
