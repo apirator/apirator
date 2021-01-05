@@ -56,6 +56,3 @@ kubectl apply -f <YOUR_GOLANG_PROJECT_FOLDER>/apirator/deploy/operator.yaml -n o
 You can find more instructions about operator-sdk command line [here](https://docs.openshift.com/container-platform/4.1/applications/operator_sdk/osdk-getting-started.html)
 
 ## License
-
-
-/home/claudiooliveira/development/projects/github/apirator/deploy/samples/players.yaml
