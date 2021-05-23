@@ -18,13 +18,16 @@ package controllers
 
 import (
 	"context"
+	"time"
 
+	api "github.com/apirator/apirator/api/v1alpha1"
+	"github.com/apirator/apirator/internal/tracing"
 	"github.com/go-logr/logr"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	apimocksv1alpha1 "github.com/apirator/apirator/api/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // APIMockReconciler reconciles a APIMock object
@@ -48,16 +51,42 @@ type APIMockReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.2/pkg/reconcile
 func (r *APIMockReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = r.Log.WithValues("apimock", req.NamespacedName)
+	span, ctx := tracing.StartSpanFromContext(ctx, tracing.WithCustomResource(req.NamespacedName))
+	defer span.Finish()
 
-	// your logic here
+	log := r.Log.WithValues("trace", span.String())
+	log.Info("reconciling")
 
-	return ctrl.Result{}, nil
+	hm := &api.APIMock{}
+	err := r.Client.Get(ctx, req.NamespacedName, hm)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			log.Info("resource not found")
+			return r.doNotRequeue()
+		}
+		span.SetError(err)
+		log.Error(err, "failed to lookup resource")
+		return r.requeueOnErr(err)
+	}
+
+	return r.doNotRequeue()
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *APIMockReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&apimocksv1alpha1.APIMock{}).
+		For(&api.APIMock{}).
 		Complete(r)
+}
+
+func (r *APIMockReconciler) doNotRequeue() (reconcile.Result, error) {
+	return reconcile.Result{}, nil
+}
+
+func (r *APIMockReconciler) requeueOnErr(err error) (reconcile.Result, error) {
+	return reconcile.Result{}, err
+}
+
+func (r *APIMockReconciler) requeueAfter(duration time.Duration, err error) (reconcile.Result, error) {
+	return reconcile.Result{RequeueAfter: duration}, err
 }
