@@ -21,19 +21,18 @@ import (
 	"time"
 
 	api "github.com/apirator/apirator/api/v1alpha1"
+	"github.com/apirator/apirator/internal/mock"
 	"github.com/apirator/apirator/internal/operation"
 	"github.com/apirator/apirator/internal/tracing"
 	"github.com/go-logr/logr"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // APIMockReconciler reconciles a APIMock object
 type APIMockReconciler struct {
-	client.Client
+	*mock.Service
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
@@ -58,16 +57,12 @@ func (r *APIMockReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	log := r.Log.WithValues("trace", span.String())
 	log.Info("reconciling")
 
-	hm := &api.APIMock{}
-	err := r.Client.Get(ctx, req.NamespacedName, hm)
+	hm, err := r.LookupResource(ctx, req.NamespacedName)
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			log.Info("resource not found")
-			return r.doNotRequeue()
-		}
-		span.SetError(err)
-		log.Error(err, "failed to lookup resource")
 		return r.requeueOnErr(err)
+	}
+	if hm == nil {
+		return r.doNotRequeue()
 	}
 
 	result, err := r.handle(ctx)
