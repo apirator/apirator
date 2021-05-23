@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.0 // indirect
 	github.com/go-logr/logr v0.3.0
+	github.com/google/wire v0.5.0
 	github.com/onsi/ginkgo v1.14.1
 	github.com/onsi/gomega v1.10.2
 	github.com/opentracing/opentracing-go v1.2.0

@@ -33,7 +33,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	apimocksv1alpha1 "github.com/apirator/apirator/api/v1alpha1"
-	"github.com/apirator/apirator/controllers"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -86,12 +85,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.APIMockReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("APIMock"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	controller, err := newAPIMockReconciler(mgr)
+	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIMock")
+		os.Exit(1)
+	}
+
+	if err = (controller).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to setup controller", "controller", "APIMock")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
