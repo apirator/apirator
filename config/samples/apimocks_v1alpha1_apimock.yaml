@@ -1,0 +1,7 @@
+apiVersion: apimocks.apirator.io/v1alpha1
+kind: APIMock
+metadata:
+  name: apimock-sample
+spec:
+  # Add fields here
+  foo: bar
