@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,18 +29,28 @@ type APIMockSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of APIMock. Edit apimock_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Definition        string            `json:"definition,omitempty"`
+	ServiceDefinition ServiceDefinition `json:"serviceDefinition,omitempty"`
+	Watch             bool              `json:"watch,omitempty"`
+	Selector          map[string]string `json:"selector,omitempty"`
+	Host              string            `json:"host,omitempty"`
+	Initialized       bool              `json:"initialized,omitempty"`
 }
 
 // APIMockStatus defines the observed state of APIMock
-type APIMockStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+type APIMockStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+}
+
+// Service Definition it will "link" the mock with created service
+type ServiceDefinition struct {
+	Port        int            `json:"port,omitempty"`
+	ServiceType v1.ServiceType `json:"serviceType,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".status.phase",name=Status,type=string
 
 // APIMock is the Schema for the apimocks API
 type APIMock struct {

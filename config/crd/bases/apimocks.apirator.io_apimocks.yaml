@@ -16,7 +16,11 @@ spec:
     singular: apimock
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.phase
+      name: Status
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: APIMock is the Schema for the apimocks API
@@ -36,10 +40,29 @@ spec:
           spec:
             description: APIMockSpec defines the desired state of APIMock
             properties:
-              foo:
-                description: Foo is an example field of APIMock. Edit apimock_types.go
-                  to remove/update
+              definition:
                 type: string
+              host:
+                type: string
+              initialized:
+                type: boolean
+              selector:
+                additionalProperties:
+                  type: string
+                type: object
+              serviceDefinition:
+                description: Service Definition it will "link" the mock with created
+                  service
+                properties:
+                  port:
+                    type: integer
+                  serviceType:
+                    description: Service Type string describes ingress methods for
+                      a service
+                    type: string
+                type: object
+              watch:
+                type: boolean
             type: object
           status:
             description: APIMockStatus defines the observed state of APIMock
