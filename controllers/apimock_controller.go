@@ -21,6 +21,7 @@ import (
 	"time"
 
 	api "github.com/apirator/apirator/api/v1alpha1"
+	"github.com/apirator/apirator/internal/operation"
 	"github.com/apirator/apirator/internal/tracing"
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -69,7 +70,9 @@ func (r *APIMockReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.requeueOnErr(err)
 	}
 
-	return r.doNotRequeue()
+	result, err := r.handle(ctx)
+
+	return result, err
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -77,6 +80,19 @@ func (r *APIMockReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&api.APIMock{}).
 		Complete(r)
+}
+
+func (r *APIMockReconciler) handle(ctx context.Context, operations ...operation.Func) (reconcile.Result, error) {
+	for _, op := range operations {
+		result, err := op(ctx)
+		if err != nil || (result != nil && result.RequeueRequest) {
+			return r.requeueAfter(result.RequeueDelay, err)
+		}
+		if result.CancelRequest {
+			return r.doNotRequeue()
+		}
+	}
+	return r.doNotRequeue()
 }
 
 func (r *APIMockReconciler) doNotRequeue() (reconcile.Result, error) {
