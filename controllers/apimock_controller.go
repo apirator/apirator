@@ -21,7 +21,7 @@ import (
 	"time"
 
 	api "github.com/apirator/apirator/api/v1alpha1"
-	"github.com/apirator/apirator/internal/mock"
+	"github.com/apirator/apirator/internal/apimock"
 	"github.com/apirator/apirator/internal/operation"
 	"github.com/apirator/apirator/internal/tracing"
 	"github.com/go-logr/logr"
@@ -32,7 +32,7 @@ import (
 
 // APIMockReconciler reconciles a APIMock object
 type APIMockReconciler struct {
-	*mock.Service
+	*apimock.Service
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
@@ -65,7 +65,10 @@ func (r *APIMockReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return r.doNotRequeue()
 	}
 
-	result, err := r.handle(ctx)
+	result, err := r.handle(ctx,
+		hm.EnsureDefinitionIsValid,
+		hm.EnsureConfigMap,
+	)
 
 	return result, err
 }

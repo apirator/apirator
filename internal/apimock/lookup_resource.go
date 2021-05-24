@@ -1,4 +1,4 @@
-package mock
+package apimock
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (s *Service) LookupResource(ctx context.Context, key client.ObjectKey) (*api.APIMock, error) {
+func (s *Service) LookupResource(ctx context.Context, key client.ObjectKey) (*Adapter, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx)
 	defer span.Finish()
 
@@ -24,5 +24,5 @@ func (s *Service) LookupResource(ctx context.Context, key client.ObjectKey) (*ap
 		return nil, fmt.Errorf("failed to lookup resource: %w", err)
 	}
 
-	return hm, nil
+	return newAdapter(hm, s), nil
 }

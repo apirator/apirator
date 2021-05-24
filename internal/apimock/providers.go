@@ -1,4 +1,4 @@
-package mock
+package apimock
 
 import (
 	"github.com/google/wire"

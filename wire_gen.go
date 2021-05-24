@@ -7,8 +7,8 @@ package main
 
 import (
 	"github.com/apirator/apirator/controllers"
+	"github.com/apirator/apirator/internal/apimock"
 	manager2 "github.com/apirator/apirator/internal/manager"
-	"github.com/apirator/apirator/internal/mock"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
@@ -20,7 +20,7 @@ import (
 
 func newAPIMockReconciler(mgr manager.Manager) (*controllers.APIMockReconciler, error) {
 	client := manager2.Client(mgr)
-	service := mock.NewService(client)
+	service := apimock.NewService(client)
 	runtimeScheme := manager2.Scheme(mgr)
 	apiMockReconciler := controllers.NewAPIMockReconciler(service, runtimeScheme)
 	return apiMockReconciler, nil
