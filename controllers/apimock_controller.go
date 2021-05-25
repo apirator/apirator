@@ -70,6 +70,9 @@ func (r *APIMockReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		hm.EnsureConfigMap,
 	)
 
+	log.V(1).
+		WithValues("error", err != nil, "requeing", result.Requeue, "delay", result.RequeueAfter).
+		Info("finished reconcile")
 	return result, err
 }
 
@@ -83,6 +86,9 @@ func (r *APIMockReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *APIMockReconciler) handle(ctx context.Context, operations ...operation.Func) (reconcile.Result, error) {
 	for _, op := range operations {
 		result, err := op(ctx)
+		if err != nil && result == nil {
+			return r.requeueOnErr(err)
+		}
 		if err != nil || (result != nil && result.RequeueRequest) {
 			return r.requeueAfter(result.RequeueDelay, err)
 		}

@@ -2,6 +2,7 @@ package apimock
 
 import (
 	"context"
+
 	"github.com/apirator/apirator/internal/operation"
 	"github.com/apirator/apirator/internal/tracing"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -21,12 +22,12 @@ func (a *Adapter) EnsureDefinitionIsValid(ctx context.Context) (*operation.Resul
 
 	err = doc.Validate(ctx)
 	if err != nil {
-		span.SetError(err)
 		log.Info("openapi definition is invalid", "cause", err)
 
 		// TODO: mark as invalid oas
 		return operation.StopProcessing()
 	}
 
+	log.Info("openapi definition is valid")
 	return operation.ContinueProcessing()
 }

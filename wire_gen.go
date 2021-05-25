@@ -20,8 +20,8 @@ import (
 
 func newAPIMockReconciler(mgr manager.Manager) (*controllers.APIMockReconciler, error) {
 	client := manager2.Client(mgr)
-	service := apimock.NewService(client)
 	runtimeScheme := manager2.Scheme(mgr)
+	service := apimock.NewService(client, runtimeScheme)
 	apiMockReconciler := controllers.NewAPIMockReconciler(service, runtimeScheme)
 	return apiMockReconciler, nil
 }
