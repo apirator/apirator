@@ -18,18 +18,21 @@ package controllers
 
 import (
 	"context"
+	"time"
 
+	api "github.com/apirator/apirator/api/v1alpha1"
+	"github.com/apirator/apirator/internal/apimock"
+	"github.com/apirator/apirator/internal/operation"
+	"github.com/apirator/apirator/internal/tracing"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	apimocksv1alpha1 "github.com/apirator/apirator/api/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // APIMockReconciler reconciles a APIMock object
 type APIMockReconciler struct {
-	client.Client
+	*apimock.Service
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
@@ -48,16 +51,62 @@ type APIMockReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.2/pkg/reconcile
 func (r *APIMockReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = r.Log.WithValues("apimock", req.NamespacedName)
+	span, ctx := tracing.StartSpanFromContext(ctx, tracing.WithCustomResource(req.NamespacedName))
+	defer span.Finish()
 
-	// your logic here
+	log := r.Log.WithValues("trace", span.String())
+	log.Info("reconciling")
 
-	return ctrl.Result{}, nil
+	hm, err := r.LookupResource(ctx, req.NamespacedName)
+	if err != nil {
+		return r.requeueOnErr(err)
+	}
+	if hm == nil {
+		return r.doNotRequeue()
+	}
+
+	result, err := r.handle(ctx,
+		hm.EnsureDefinitionIsValid,
+		hm.EnsureConfigMap,
+	)
+
+	log.V(1).
+		WithValues("error", err != nil, "requeing", result.Requeue, "delay", result.RequeueAfter).
+		Info("finished reconcile")
+	return result, err
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *APIMockReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&apimocksv1alpha1.APIMock{}).
+		For(&api.APIMock{}).
 		Complete(r)
+}
+
+func (r *APIMockReconciler) handle(ctx context.Context, operations ...operation.Func) (reconcile.Result, error) {
+	for _, op := range operations {
+		result, err := op(ctx)
+		if err != nil && result == nil {
+			return r.requeueOnErr(err)
+		}
+		if err != nil || (result != nil && result.RequeueRequest) {
+			return r.requeueAfter(result.RequeueDelay, err)
+		}
+		if result.CancelRequest {
+			return r.doNotRequeue()
+		}
+	}
+	return r.doNotRequeue()
+}
+
+func (r *APIMockReconciler) doNotRequeue() (reconcile.Result, error) {
+	return reconcile.Result{}, nil
+}
+
+func (r *APIMockReconciler) requeueOnErr(err error) (reconcile.Result, error) {
+	return reconcile.Result{}, err
+}
+
+func (r *APIMockReconciler) requeueAfter(duration time.Duration, err error) (reconcile.Result, error) {
+	return reconcile.Result{RequeueAfter: duration}, err
 }

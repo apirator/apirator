@@ -24,6 +24,7 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	"github.com/apirator/apirator/internal/tracing"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -32,7 +33,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	apimocksv1alpha1 "github.com/apirator/apirator/api/v1alpha1"
-	"github.com/apirator/apirator/controllers"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -65,6 +65,13 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
+	closer, err := tracing.Initialize("apirator", "github.com/apirator/apirator/")
+	if err != nil {
+		setupLog.Error(err, "unable to initialize tracing")
+		os.Exit(1)
+	}
+	defer closer.Close()
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
@@ -78,12 +85,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.APIMockReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("APIMock"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	controller, err := newAPIMockReconciler(mgr)
+	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIMock")
+		os.Exit(1)
+	}
+
+	if err = (controller).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to setup controller", "controller", "APIMock")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
