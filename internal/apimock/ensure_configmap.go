@@ -3,6 +3,7 @@ package apimock
 import (
 	"context"
 	"fmt"
+	api "github.com/apirator/apirator/api/v1alpha1"
 	"path/filepath"
 
 	"github.com/apirator/apirator/internal/inventory"
@@ -20,24 +21,12 @@ func (a *Adapter) EnsureConfigMap(ctx context.Context) (*operation.Result, error
 	span, ctx := tracing.StartSpanFromContext(ctx)
 	defer span.Finish()
 
-	bJson, err := yu.YAMLToJSON([]byte(a.APIMock.Spec.Definition))
+	desired, err := newDesiredConfigMap(a.APIMock)
 	if err != nil {
 		span.SetError(err)
-		return nil, fmt.Errorf("failed to convert openapi definition to JSON: %w", err)
+		return nil, err
 	}
-
-	desired := core.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      a.APIMock.Name,
-			Namespace: a.APIMock.Namespace,
-			Labels:    map[string]string{"app.kubernetes.io/managed-by": "apirator"},
-		},
-		Data: map[string]string{
-			filepath.Base(yamlConfigPath): a.APIMock.Spec.Definition,
-			filepath.Base(jsonConfigPath): string(bJson),
-		},
-	}
-	if err := controllerutil.SetControllerReference(a.APIMock, &desired, a.svc.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(a.APIMock, desired, a.svc.scheme); err != nil {
 		span.SetError(err)
 		return nil, fmt.Errorf("failed to set ConfigMap %q owner reference: %v", desired.GetName(), err)
 	}
@@ -52,7 +41,7 @@ func (a *Adapter) EnsureConfigMap(ctx context.Context) (*operation.Result, error
 		return nil, fmt.Errorf("failed to list ConfigMaps: %w", err)
 	}
 
-	inv := inventory.ForConfigMaps(list.Items, []core.ConfigMap{desired})
+	inv := inventory.ForConfigMaps(list.Items, []core.ConfigMap{*desired})
 	err = a.createConfigMaps(ctx, inv)
 	if err != nil {
 		return nil, err
@@ -117,4 +106,23 @@ func (a *Adapter) deleteConfigMap(ctx context.Context, inv inventory.ConfigMap) 
 	}
 
 	return nil
+}
+
+func newDesiredConfigMap(apimock *api.APIMock) (*core.ConfigMap, error) {
+	bJson, err := yu.YAMLToJSON([]byte(apimock.Spec.Definition))
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert openapi definition to JSON: %w", err)
+	}
+
+	return &core.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      apimock.Name,
+			Namespace: apimock.Namespace,
+			Labels:    map[string]string{"app.kubernetes.io/managed-by": "apirator"},
+		},
+		Data: map[string]string{
+			filepath.Base(yamlConfigPath): apimock.Spec.Definition,
+			filepath.Base(jsonConfigPath): string(bJson),
+		},
+	}, nil
 }
