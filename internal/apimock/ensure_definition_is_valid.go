@@ -14,7 +14,7 @@ func (a *Adapter) EnsureDefinitionIsValid(ctx context.Context) (*operation.Resul
 	defer span.Finish()
 
 	loader := &openapi3.Loader{Context: ctx}
-	doc, err := loader.LoadFromData([]byte(a.Spec.Definition))
+	doc, err := loader.LoadFromData([]byte(a.APIMock.Spec.Definition))
 	if err != nil {
 		span.SetError(err)
 		return nil, err

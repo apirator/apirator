@@ -20,7 +20,7 @@ func NewService(client client.Client, scheme *runtime.Scheme) *Service {
 	return &Service{client: client, scheme: scheme}
 }
 
-func (s *Service) LookupResource(ctx context.Context, key client.ObjectKey) (*Adapter, error) {
+func (s *Service) LookupResourceAdapter(ctx context.Context, key client.ObjectKey) (*Adapter, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx)
 	defer span.Finish()
 

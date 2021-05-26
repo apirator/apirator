@@ -19,7 +19,7 @@ spec:
       description: These APIs is part of bets solution. This APIs is responsible to players management.
       version: 0.0.1
       contact:
-        email: apiratordev@gmail.com
+        email: tangelodev@gmail.com
       license:
         name: Apache 2.0
         url: 'http://www.apache.org/licenses/LICENSE-2.0.html'

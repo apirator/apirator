@@ -57,7 +57,7 @@ func (r *APIMockReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	log := r.Log.WithValues("trace", span.String())
 	log.Info("reconciling")
 
-	hm, err := r.LookupResource(ctx, req.NamespacedName)
+	hm, err := r.LookupResourceAdapter(ctx, req.NamespacedName)
 	if err != nil {
 		return r.requeueOnErr(err)
 	}
