@@ -10,7 +10,7 @@ import (
 
 func (a *Adapter) EnsureDefinitionIsValid(ctx context.Context) (*operation.Result, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx)
-	log := a.Log.WithValues("trace", span.String())
+	log := a.logger.WithValues("trace", span.String())
 	defer span.Finish()
 
 	loader := &openapi3.Loader{Context: ctx}

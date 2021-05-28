@@ -13,14 +13,14 @@ const (
 
 type Adapter struct {
 	APIMock *api.APIMock
+	logger  logr.Logger
 	svc     *Service
-	Log     logr.Logger
 }
 
 func newAdapter(APIMock *api.APIMock, svc *Service) *Adapter {
 	return &Adapter{
 		APIMock: APIMock,
-		Log:     ctrl.Log.WithName("adapters").WithName("APIMock"),
+		logger:  ctrl.Log.WithName("adapters").WithName("APIMock"),
 		svc:     svc,
 	}
 }

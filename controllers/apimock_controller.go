@@ -33,7 +33,7 @@ import (
 // APIMockReconciler reconciles a APIMock object
 type APIMockReconciler struct {
 	*apimock.Service
-	Log    logr.Logger
+	logger logr.Logger
 	Scheme *runtime.Scheme
 }
 
@@ -54,7 +54,7 @@ func (r *APIMockReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	span, ctx := tracing.StartSpanFromContext(ctx, tracing.WithCustomResource(req.NamespacedName))
 	defer span.Finish()
 
-	log := r.Log.WithValues("trace", span.String())
+	log := r.logger.WithValues("trace", span.String())
 	log.Info("reconciling")
 
 	hm, err := r.LookupResourceAdapter(ctx, req.NamespacedName)

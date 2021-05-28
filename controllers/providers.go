@@ -14,7 +14,7 @@ var Providers = wire.NewSet(
 func NewAPIMockReconciler(svc *apimock.Service, scheme *runtime.Scheme) *APIMockReconciler {
 	return &APIMockReconciler{
 		Service: svc,
-		Log:     ctrl.Log.WithName("controllers").WithName("APIMock"),
+		logger:  ctrl.Log.WithName("controllers").WithName("APIMock"),
 		Scheme:  scheme,
 	}
 }
