@@ -3,17 +3,13 @@ package inventory
 import (
 	"fmt"
 
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	core "k8s.io/api/core/v1"
 )
 
-type ConfigMap struct {
-	Create []core.ConfigMap
-	Update []core.ConfigMap
-	Delete []core.ConfigMap
-}
-
-func ForConfigMaps(existing, desired []core.ConfigMap) ConfigMap {
-	var update []core.ConfigMap
+func ForConfigMaps(existing, desired []core.ConfigMap) Object {
+	var update []client.Object
 	mcreate := configsMap(desired)
 	mdelete := configsMap(existing)
 
@@ -33,13 +29,13 @@ func ForConfigMaps(existing, desired []core.ConfigMap) ConfigMap {
 				tp.ObjectMeta.Labels[k] = v
 			}
 
-			update = append(update, *tp)
+			update = append(update, tp)
 			delete(mcreate, k)
 			delete(mdelete, k)
 		}
 	}
 
-	return ConfigMap{
+	return Object{
 		Create: configsList(mcreate),
 		Update: update,
 		Delete: configsList(mdelete),
@@ -54,10 +50,10 @@ func configsMap(deps []core.ConfigMap) map[string]core.ConfigMap {
 	return m
 }
 
-func configsList(m map[string]core.ConfigMap) []core.ConfigMap {
-	var l []core.ConfigMap
+func configsList(m map[string]core.ConfigMap) []client.Object {
+	var l []client.Object
 	for _, v := range m {
-		l = append(l, v)
+		l = append(l, &v)
 	}
 	return l
 }

@@ -3,8 +3,9 @@ package apimock
 import (
 	"context"
 	"fmt"
-	api "github.com/apirator/apirator/api/v1alpha1"
 	"path/filepath"
+
+	api "github.com/apirator/apirator/api/v1alpha1"
 
 	"github.com/apirator/apirator/internal/inventory"
 	"github.com/apirator/apirator/internal/operation"
@@ -31,28 +32,14 @@ func (a *Adapter) EnsureConfigMap(ctx context.Context) (*operation.Result, error
 		return nil, fmt.Errorf("failed to set ConfigMap %q owner reference: %v", desired.GetName(), err)
 	}
 
-	opts := []client.ListOption{
-		client.InNamespace(a.APIMock.Namespace),
-		client.MatchingLabels(map[string]string{"app.kubernetes.io/managed-by": "apirator"}),
-	}
-	list := &core.ConfigMapList{}
-	if err := a.svc.client.List(ctx, list, opts...); err != nil {
+	list, err := a.listConfigMaps()
+	if err != nil {
 		span.SetError(err)
-		return nil, fmt.Errorf("failed to list ConfigMaps: %w", err)
+		return nil, err
 	}
 
 	inv := inventory.ForConfigMaps(list.Items, []core.ConfigMap{*desired})
-	err = a.createConfigMaps(ctx, inv)
-	if err != nil {
-		return nil, err
-	}
-
-	err = a.updateConfigMap(ctx, inv)
-	if err != nil {
-		return nil, err
-	}
-
-	err = a.deleteConfigMap(ctx, inv)
+	err = a.svc.Apply(ctx, inv)
 	if err != nil {
 		return nil, err
 	}
@@ -60,52 +47,16 @@ func (a *Adapter) EnsureConfigMap(ctx context.Context) (*operation.Result, error
 	return operation.ContinueProcessing()
 }
 
-func (a *Adapter) createConfigMaps(ctx context.Context, inv inventory.ConfigMap) error {
-	span, ctx := tracing.StartSpanFromContext(ctx)
-	log := a.Log.WithValues("trace", span.String())
-	defer span.Finish()
-
-	for _, cm := range inv.Create {
-		log.Info(fmt.Sprintf("creating ConfigMap %q", cm.GetName()))
-		if err := a.svc.client.Create(ctx, &cm); err != nil {
-			span.SetError(err)
-			return fmt.Errorf("failed to create ConfigMap %q: %w", cm.GetName(), err)
-		}
+func (a *Adapter) listConfigMaps() (*core.ConfigMapList, error) {
+	opts := []client.ListOption{
+		client.InNamespace(a.APIMock.Namespace),
+		client.MatchingLabels(map[string]string{"app.kubernetes.io/managed-by": "apirator"}),
 	}
-
-	return nil
-}
-
-func (a *Adapter) updateConfigMap(ctx context.Context, inv inventory.ConfigMap) error {
-	span, ctx := tracing.StartSpanFromContext(ctx)
-	log := a.Log.WithValues("trace", span.String())
-	defer span.Finish()
-
-	for _, cm := range inv.Update {
-		log.Info(fmt.Sprintf("updating ConfigMap %q", cm.GetName()))
-		if err := a.svc.client.Update(ctx, &cm); err != nil {
-			span.SetError(err)
-			return fmt.Errorf("failed to update ConfigMap %q: %w", cm.GetName(), err)
-		}
+	list := new(core.ConfigMapList)
+	if err := a.svc.client.List(context.TODO(), list, opts...); err != nil {
+		return nil, fmt.Errorf("failed to list ConfigMaps: %w", err)
 	}
-
-	return nil
-}
-
-func (a *Adapter) deleteConfigMap(ctx context.Context, inv inventory.ConfigMap) error {
-	span, ctx := tracing.StartSpanFromContext(ctx)
-	log := a.Log.WithValues("trace", span.String())
-	defer span.Finish()
-
-	for _, cm := range inv.Delete {
-		log.Info(fmt.Sprintf("deleting ConfigMap %q", cm.GetName()))
-		if err := a.svc.client.Delete(ctx, &cm); err != nil {
-			span.SetError(err)
-			return fmt.Errorf("failed to delete ConfigMap %q: %w", cm.GetName(), err)
-		}
-	}
-
-	return nil
+	return list, nil
 }
 
 func newDesiredConfigMap(apimock *api.APIMock) (*core.ConfigMap, error) {
