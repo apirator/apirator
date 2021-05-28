@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	api "github.com/apirator/apirator/api/v1alpha1"
-
 	"github.com/apirator/apirator/internal/inventory"
 	"github.com/apirator/apirator/internal/operation"
 	"github.com/apirator/apirator/internal/tracing"
@@ -22,12 +20,12 @@ func (a *Adapter) EnsureConfigMap(ctx context.Context) (*operation.Result, error
 	span, ctx := tracing.StartSpanFromContext(ctx)
 	defer span.Finish()
 
-	desired, err := newDesiredConfigMap(a.APIMock)
+	desired, err := a.newDesiredConfigMap()
 	if err != nil {
 		span.SetError(err)
 		return nil, err
 	}
-	if err := controllerutil.SetControllerReference(a.APIMock, desired, a.svc.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(a.resource, desired, a.svc.scheme); err != nil {
 		span.SetError(err)
 		return nil, fmt.Errorf("failed to set ConfigMap %q owner reference: %v", desired.GetName(), err)
 	}
@@ -49,7 +47,7 @@ func (a *Adapter) EnsureConfigMap(ctx context.Context) (*operation.Result, error
 
 func (a *Adapter) listConfigMaps() (*core.ConfigMapList, error) {
 	opts := []client.ListOption{
-		client.InNamespace(a.APIMock.Namespace),
+		client.InNamespace(a.resource.Namespace),
 		client.MatchingLabels(map[string]string{"app.kubernetes.io/managed-by": "apirator"}),
 	}
 	list := new(core.ConfigMapList)
@@ -59,20 +57,20 @@ func (a *Adapter) listConfigMaps() (*core.ConfigMapList, error) {
 	return list, nil
 }
 
-func newDesiredConfigMap(apimock *api.APIMock) (*core.ConfigMap, error) {
-	bJson, err := yu.YAMLToJSON([]byte(apimock.Spec.Definition))
+func (a *Adapter) newDesiredConfigMap() (*core.ConfigMap, error) {
+	bJson, err := yu.YAMLToJSON([]byte(a.resource.Spec.Definition))
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert openapi definition to JSON: %w", err)
 	}
 
 	return &core.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      apimock.Name,
-			Namespace: apimock.Namespace,
+			Name:      a.resource.Name,
+			Namespace: a.resource.Namespace,
 			Labels:    map[string]string{"app.kubernetes.io/managed-by": "apirator"},
 		},
 		Data: map[string]string{
-			filepath.Base(yamlConfigPath): apimock.Spec.Definition,
+			filepath.Base(yamlConfigPath): a.resource.Spec.Definition,
 			filepath.Base(jsonConfigPath): string(bJson),
 		},
 	}, nil

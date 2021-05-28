@@ -12,15 +12,15 @@ const (
 )
 
 type Adapter struct {
-	APIMock *api.APIMock
-	logger  logr.Logger
-	svc     *Service
+	resource *api.APIMock
+	logger   logr.Logger
+	svc      *Service
 }
 
-func newAdapter(APIMock *api.APIMock, svc *Service) *Adapter {
+func newAdapter(resource *api.APIMock, svc *Service) *Adapter {
 	return &Adapter{
-		APIMock: APIMock,
-		logger:  ctrl.Log.WithName("adapters").WithName("APIMock"),
-		svc:     svc,
+		resource: resource,
+		logger:   ctrl.Log.WithName("adapters").WithName("APIMock"),
+		svc:      svc,
 	}
 }

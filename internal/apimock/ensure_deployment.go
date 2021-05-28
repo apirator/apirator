@@ -12,7 +12,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	api "github.com/apirator/apirator/api/v1alpha1"
 	"github.com/apirator/apirator/internal/operation"
 	"github.com/apirator/apirator/internal/tracing"
 	appsv1 "k8s.io/api/apps/v1"
@@ -39,8 +38,8 @@ func (a *Adapter) EnsureDeployment(ctx context.Context) (*operation.Result, erro
 	span, ctx := tracing.StartSpanFromContext(ctx)
 	defer span.Finish()
 
-	desired := newDesiredDeployment(a.APIMock)
-	if err := controllerutil.SetControllerReference(a.APIMock, desired, a.svc.scheme); err != nil {
+	desired := a.newDesiredDeployment()
+	if err := controllerutil.SetControllerReference(a.resource, desired, a.svc.scheme); err != nil {
 		span.SetError(err)
 		return nil, fmt.Errorf("failed to set Deployment %q owner reference: %v", desired.GetName(), err)
 	}
@@ -62,7 +61,7 @@ func (a *Adapter) EnsureDeployment(ctx context.Context) (*operation.Result, erro
 
 func (a *Adapter) listDeployments() (*appsv1.DeploymentList, error) {
 	opts := []client.ListOption{
-		client.InNamespace(a.APIMock.Namespace),
+		client.InNamespace(a.resource.Namespace),
 		client.MatchingLabels(map[string]string{"app.kubernetes.io/managed-by": "apirator"}),
 	}
 	list := new(appsv1.DeploymentList)
@@ -72,16 +71,16 @@ func (a *Adapter) listDeployments() (*appsv1.DeploymentList, error) {
 	return list, nil
 }
 
-func newDesiredDeployment(apimock *api.APIMock) *appsv1.Deployment {
+func (a *Adapter) newDesiredDeployment() *appsv1.Deployment {
 	reps := int32(1)
 	labels := map[string]string{"app.kubernetes.io/managed-by": "apirator"}
 
-	volumes := newVolumes(apimock)
-	containers := []v1.Container{newMockContainer(apimock), newDocContainer(apimock)}
+	volumes := a.newVolumes()
+	containers := []v1.Container{a.newMockContainer(), a.newDocContainer()}
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      apimock.GetName(),
-			Namespace: apimock.GetNamespace(),
+			Name:      a.resource.GetName(),
+			Namespace: a.resource.GetNamespace(),
 			Labels:    labels,
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -89,8 +88,8 @@ func newDesiredDeployment(apimock *api.APIMock) *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{MatchLabels: labels},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      apimock.GetName(),
-					Namespace: apimock.GetNamespace(),
+					Name:      a.resource.GetName(),
+					Namespace: a.resource.GetNamespace(),
 					Labels:    labels,
 				},
 				Spec: v1.PodSpec{
@@ -109,7 +108,7 @@ func newDesiredDeployment(apimock *api.APIMock) *appsv1.Deployment {
 	}
 }
 
-func newMockContainer(apimock *api.APIMock) v1.Container {
+func (a *Adapter) newMockContainer() v1.Container {
 	var ports []v1.ContainerPort
 	ports = append(ports, v1.ContainerPort{
 		ContainerPort: mockPort,
@@ -121,7 +120,7 @@ func newMockContainer(apimock *api.APIMock) v1.Container {
 	}
 	cnWatch := v1.EnvVar{
 		Name:  "WATCH",
-		Value: strconv.FormatBool(apimock.Spec.Watch),
+		Value: strconv.FormatBool(a.resource.Spec.Watch),
 	}
 
 	// Handler for probes
@@ -148,16 +147,16 @@ func newMockContainer(apimock *api.APIMock) v1.Container {
 		Args: []string{
 			mockVolumeMountPath + "oas.yaml",
 		},
-		VolumeMounts:   newContainerMounts(),
+		VolumeMounts:   a.newContainerMounts(),
 		Ports:          ports,
-		Resources:      newContainerRequirements(),
+		Resources:      a.newContainerRequirements(),
 		Env:            []v1.EnvVar{cnPort, cnWatch},
 		ReadinessProbe: rp,
 		LivenessProbe:  rp,
 	}
 }
 
-func newDocContainer(apimock *api.APIMock) v1.Container {
+func (a *Adapter) newDocContainer() v1.Container {
 	var ports []v1.ContainerPort
 	ports = append(ports, v1.ContainerPort{
 		ContainerPort: docPort,
@@ -173,26 +172,26 @@ func newDocContainer(apimock *api.APIMock) v1.Container {
 	}
 	baseUrl := v1.EnvVar{
 		Name:  "BASE_URL",
-		Value: "/" + apimock.GetName() + "/docs",
+		Value: "/" + a.resource.GetName() + "/docs",
 	}
 	return v1.Container{
 		Name:         docContainerName,
 		Image:        docImageName,
-		VolumeMounts: newContainerMounts(),
+		VolumeMounts: a.newContainerMounts(),
 		Ports:        ports,
-		Resources:    newContainerRequirements(),
+		Resources:    a.newContainerRequirements(),
 		Env:          []v1.EnvVar{cnPort, oasPath, baseUrl},
 	}
 }
 
-func newContainerMounts() []v1.VolumeMount {
+func (a *Adapter) newContainerMounts() []v1.VolumeMount {
 	return []v1.VolumeMount{{
 		Name:      mockVolumeMountName,
 		MountPath: filepath.Dir(mockVolumeMountPath),
 	}}
 }
 
-func newContainerRequirements() v1.ResourceRequirements {
+func (a *Adapter) newContainerRequirements() v1.ResourceRequirements {
 	// Configure Requests
 	requests := v1.ResourceList{}
 	requests[v1.ResourceCPU] = resource.MustParse("10m")
@@ -207,13 +206,13 @@ func newContainerRequirements() v1.ResourceRequirements {
 	}
 }
 
-func newVolumes(apimock *api.APIMock) []v1.Volume {
+func (a *Adapter) newVolumes() []v1.Volume {
 	return []v1.Volume{{
 		Name: mockVolumeMountName,
 		VolumeSource: v1.VolumeSource{
 			ConfigMap: &v1.ConfigMapVolumeSource{
 				LocalObjectReference: v1.LocalObjectReference{
-					Name: apimock.GetName(),
+					Name: a.resource.GetName(),
 				},
 			},
 		},
