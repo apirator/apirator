@@ -24,6 +24,22 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+const (
+	Provisioned          = "Provisioned"
+	Error                = "Error"
+	InvalidOas           = "InvalidOAS"
+	WaitingAnnotations   = "WaitingAnnotations"
+	IngressTag           = "ingress"
+	NamespaceTag         = "namespace"
+	IngressFinalizerName = "ingress.finalizers.apirator.io"
+)
+
+type Step struct {
+	Action      string      `json:"action,omitempty"`
+	LastUpdate  metav1.Time `json:"lastUpdate,omitempty"`
+	Description string      `json:"description,omitempty"`
+}
+
 // APIMockSpec defines the desired state of APIMock
 type APIMockSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
@@ -40,6 +56,8 @@ type APIMockSpec struct {
 // APIMockStatus defines the observed state of APIMock
 type APIMockStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	Phase string `json:"phase,omitempty"`
+	Steps []Step `json:"steps"`
 }
 
 // Service Definition it will "link" the mock with created service

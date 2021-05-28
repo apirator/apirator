@@ -66,6 +66,25 @@ spec:
             type: object
           status:
             description: APIMockStatus defines the observed state of APIMock
+            properties:
+              phase:
+                description: 'Important: Run "make" to regenerate code after modifying
+                  this file'
+                type: string
+              steps:
+                items:
+                  properties:
+                    action:
+                      type: string
+                    description:
+                      type: string
+                    lastUpdate:
+                      format: date-time
+                      type: string
+                  type: object
+                type: array
+            required:
+            - steps
             type: object
         type: object
     served: true
