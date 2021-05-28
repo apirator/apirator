@@ -73,7 +73,7 @@ func (s *Service) Apply(ctx context.Context, inv inventory.Object) error {
 func (s *Service) ListConfigMaps(resource *v1alpha1.APIMock) (*core.ConfigMapList, error) {
 	opts := []client.ListOption{
 		client.InNamespace(resource.Namespace),
-		client.MatchingLabels(Labels),
+		client.MatchingLabels(v1alpha1.APIMockLabels),
 	}
 	list := new(core.ConfigMapList)
 	if err := s.client.List(context.TODO(), list, opts...); err != nil {
@@ -85,11 +85,23 @@ func (s *Service) ListConfigMaps(resource *v1alpha1.APIMock) (*core.ConfigMapLis
 func (s *Service) ListDeployments(resource *v1alpha1.APIMock) (*appsv1.DeploymentList, error) {
 	opts := []client.ListOption{
 		client.InNamespace(resource.Namespace),
-		client.MatchingLabels(Labels),
+		client.MatchingLabels(v1alpha1.APIMockLabels),
 	}
 	list := new(appsv1.DeploymentList)
 	if err := s.client.List(context.TODO(), list, opts...); err != nil {
 		return nil, fmt.Errorf("failed to list Deployments: %w", err)
+	}
+	return list, nil
+}
+
+func (s *Service) ListServices(resource *v1alpha1.APIMock) (*core.ServiceList, error) {
+	opts := []client.ListOption{
+		client.InNamespace(resource.Namespace),
+		client.MatchingLabels(v1alpha1.APIMockLabels),
+	}
+	list := new(core.ServiceList)
+	if err := s.client.List(context.TODO(), list, opts...); err != nil {
+		return nil, fmt.Errorf("failed to list Services: %w", err)
 	}
 	return list, nil
 }

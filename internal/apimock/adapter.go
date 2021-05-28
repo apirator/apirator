@@ -35,10 +35,6 @@ func (a *Adapter) EnsureFinalizer(ctx context.Context) (*operation.Result, error
 	panic("implement me")
 }
 
-func (a *Adapter) EnsureService(ctx context.Context) (*operation.Result, error) {
-	panic("implement me")
-}
-
 func (a *Adapter) EnsureIngress(ctx context.Context) (*operation.Result, error) {
 	panic("implement me")
 }
