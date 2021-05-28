@@ -22,24 +22,18 @@ func (a *Adapter) EnsureConfigMap(ctx context.Context) (*operation.Result, error
 
 	desired, err := a.newDesiredConfigMap()
 	if err != nil {
-		span.SetError(err)
-		return nil, err
-	}
-	if err := controllerutil.SetControllerReference(a.resource, desired, a.svc.scheme); err != nil {
-		span.SetError(err)
-		return nil, fmt.Errorf("failed to set ConfigMap %q owner reference: %v", desired.GetName(), err)
+		return nil, span.HandleError(err)
 	}
 
 	list, err := a.listConfigMaps()
 	if err != nil {
-		span.SetError(err)
-		return nil, err
+		return nil, span.HandleError(err)
 	}
 
 	inv := inventory.ForConfigMaps(list.Items, []core.ConfigMap{*desired})
 	err = a.svc.Apply(ctx, inv)
 	if err != nil {
-		return nil, err
+		return nil, span.HandleError(err)
 	}
 
 	return operation.ContinueProcessing()
@@ -48,7 +42,7 @@ func (a *Adapter) EnsureConfigMap(ctx context.Context) (*operation.Result, error
 func (a *Adapter) listConfigMaps() (*core.ConfigMapList, error) {
 	opts := []client.ListOption{
 		client.InNamespace(a.resource.Namespace),
-		client.MatchingLabels(map[string]string{"app.kubernetes.io/managed-by": "apirator"}),
+		client.MatchingLabels(Labels),
 	}
 	list := new(core.ConfigMapList)
 	if err := a.svc.client.List(context.TODO(), list, opts...); err != nil {
@@ -63,15 +57,21 @@ func (a *Adapter) newDesiredConfigMap() (*core.ConfigMap, error) {
 		return nil, fmt.Errorf("failed to convert openapi definition to JSON: %w", err)
 	}
 
-	return &core.ConfigMap{
+	cm := &core.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      a.resource.Name,
 			Namespace: a.resource.Namespace,
-			Labels:    map[string]string{"app.kubernetes.io/managed-by": "apirator"},
+			Labels:    Labels,
 		},
 		Data: map[string]string{
 			filepath.Base(yamlConfigPath): a.resource.Spec.Definition,
 			filepath.Base(jsonConfigPath): string(bJson),
 		},
-	}, nil
+	}
+
+	if err := controllerutil.SetControllerReference(a.resource, cm, a.scheme); err != nil {
+		return nil, fmt.Errorf("failed to set ConfigMap %q owner reference: %v", cm.GetName(), err)
+	}
+
+	return cm, nil
 }

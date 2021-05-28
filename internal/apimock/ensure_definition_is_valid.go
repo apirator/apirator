@@ -16,8 +16,7 @@ func (a *Adapter) EnsureDefinitionIsValid(ctx context.Context) (*operation.Resul
 	loader := &openapi3.Loader{Context: ctx}
 	doc, err := loader.LoadFromData([]byte(a.resource.Spec.Definition))
 	if err != nil {
-		span.SetError(err)
-		return nil, err
+		return nil, span.HandleError(err)
 	}
 
 	err = doc.Validate(ctx)

@@ -20,21 +20,26 @@ import (
 	"context"
 	"time"
 
-	api "github.com/apirator/apirator/api/v1alpha1"
-	"github.com/apirator/apirator/internal/apimock"
+	"github.com/apirator/apirator/api/v1alpha1"
 	"github.com/apirator/apirator/internal/operation"
 	"github.com/apirator/apirator/internal/tracing"
 	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // APIMockReconciler reconciles a APIMock object
 type APIMockReconciler struct {
-	*apimock.Service
-	logger logr.Logger
-	Scheme *runtime.Scheme
+	factory AdapterFactory
+	logger  logr.Logger
+}
+
+func NewAPIMockReconciler(factory AdapterFactory) *APIMockReconciler {
+	return &APIMockReconciler{
+		factory: factory,
+		logger:  ctrl.Log.WithName("controllers").WithName("APIMock"),
+	}
 }
 
 //+kubebuilder:rbac:groups=apimocks.apirator.io,resources=apimocks,verbs=get;list;watch;create;update;patch;delete
@@ -57,18 +62,18 @@ func (r *APIMockReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	log := r.logger.WithValues("trace", span.String())
 	log.Info("reconciling")
 
-	hm, err := r.LookupResourceAdapter(ctx, req.NamespacedName)
+	adapter, err := r.factory.CreateAPIMockAdapter(ctx, req.NamespacedName)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			return r.doNotRequeue()
+		}
 		return r.requeueOnErr(err)
-	}
-	if hm == nil {
-		return r.doNotRequeue()
 	}
 
 	result, err := r.handle(ctx,
-		hm.EnsureDefinitionIsValid,
-		hm.EnsureConfigMap,
-		hm.EnsureDeployment,
+		adapter.EnsureDefinitionIsValid,
+		adapter.EnsureConfigMap,
+		adapter.EnsureDeployment,
 	)
 
 	log.V(1).
@@ -80,7 +85,7 @@ func (r *APIMockReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 // SetupWithManager sets up the controller with the Manager.
 func (r *APIMockReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&api.APIMock{}).
+		For(&v1alpha1.APIMock{}).
 		Complete(r)
 }
 

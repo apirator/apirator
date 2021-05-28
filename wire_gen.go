@@ -8,7 +8,6 @@ package main
 import (
 	"github.com/apirator/apirator/controllers"
 	"github.com/apirator/apirator/internal/apimock"
-	manager2 "github.com/apirator/apirator/internal/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
@@ -19,9 +18,10 @@ import (
 // Injectors from wire.go:
 
 func newAPIMockReconciler(mgr manager.Manager) (*controllers.APIMockReconciler, error) {
-	client := manager2.Client(mgr)
-	runtimeScheme := manager2.Scheme(mgr)
-	service := apimock.NewService(client, runtimeScheme)
-	apiMockReconciler := controllers.NewAPIMockReconciler(service, runtimeScheme)
+	runtimeScheme := extractScheme(mgr)
+	client := extractClient(mgr)
+	service := apimock.NewService(client)
+	adapterFactory := apimock.NewAdapterFactory(runtimeScheme, service)
+	apiMockReconciler := controllers.NewAPIMockReconciler(adapterFactory)
 	return apiMockReconciler, nil
 }

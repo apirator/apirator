@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	api "github.com/apirator/apirator/api/v1alpha1"
+	"github.com/apirator/apirator/api/v1alpha1"
 	"github.com/apirator/apirator/internal/inventory"
 	"github.com/apirator/apirator/internal/tracing"
 	"github.com/go-logr/logr"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -17,32 +15,25 @@ import (
 type Service struct {
 	client client.Client
 	logger logr.Logger
-	scheme *runtime.Scheme
 }
 
-func NewService(client client.Client, scheme *runtime.Scheme) *Service {
+func NewService(client client.Client) *Service {
 	return &Service{
 		client: client,
 		logger: ctrl.Log.WithName("services").WithName("APIMock"),
-		scheme: scheme,
 	}
 }
 
-func (s *Service) LookupResourceAdapter(ctx context.Context, key client.ObjectKey) (*Adapter, error) {
+func (s *Service) LookupAPIMock(ctx context.Context, key client.ObjectKey) (*v1alpha1.APIMock, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx)
 	defer span.Finish()
 
-	hm := &api.APIMock{}
-	err := s.client.Get(ctx, key, hm)
+	r := new(v1alpha1.APIMock)
+	err := s.client.Get(ctx, key, r)
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil, nil
-		}
-		span.SetError(err)
 		return nil, fmt.Errorf("failed to lookup resource: %w", err)
 	}
-
-	return newAdapter(hm, s), nil
+	return r, nil
 }
 
 func (s *Service) Apply(ctx context.Context, inv inventory.Object) error {
@@ -67,7 +58,7 @@ func (s *Service) Apply(ctx context.Context, inv inventory.Object) error {
 	}
 
 	for _, obj := range inv.Delete {
-		if err := s.client.Update(ctx, obj); err != nil {
+		if err := s.client.Delete(ctx, obj); err != nil {
 			span.SetError(err)
 			return fmt.Errorf("failed to delete %T %q: %w", obj, obj.GetName(), err)
 		}

@@ -6,11 +6,10 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
 	"github.com/apirator/apirator/internal/inventory"
 	"k8s.io/apimachinery/pkg/api/resource"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/apirator/apirator/internal/operation"
 	"github.com/apirator/apirator/internal/tracing"
@@ -18,6 +17,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -38,22 +38,20 @@ func (a *Adapter) EnsureDeployment(ctx context.Context) (*operation.Result, erro
 	span, ctx := tracing.StartSpanFromContext(ctx)
 	defer span.Finish()
 
-	desired := a.newDesiredDeployment()
-	if err := controllerutil.SetControllerReference(a.resource, desired, a.svc.scheme); err != nil {
-		span.SetError(err)
-		return nil, fmt.Errorf("failed to set Deployment %q owner reference: %v", desired.GetName(), err)
+	desired, err := a.newDesiredDeployment()
+	if err != nil {
+		return nil, span.HandleError(err)
 	}
 
 	list, err := a.listDeployments()
 	if err != nil {
-		span.SetError(err)
-		return nil, err
+		return nil, span.HandleError(err)
 	}
 
 	inv := inventory.ForDeployments(list.Items, []appsv1.Deployment{*desired})
 	err = a.svc.Apply(ctx, inv)
 	if err != nil {
-		return nil, err
+		return nil, span.HandleError(err)
 	}
 
 	return operation.ContinueProcessing()
@@ -62,7 +60,7 @@ func (a *Adapter) EnsureDeployment(ctx context.Context) (*operation.Result, erro
 func (a *Adapter) listDeployments() (*appsv1.DeploymentList, error) {
 	opts := []client.ListOption{
 		client.InNamespace(a.resource.Namespace),
-		client.MatchingLabels(map[string]string{"app.kubernetes.io/managed-by": "apirator"}),
+		client.MatchingLabels(Labels),
 	}
 	list := new(appsv1.DeploymentList)
 	if err := a.svc.client.List(context.TODO(), list, opts...); err != nil {
@@ -71,13 +69,13 @@ func (a *Adapter) listDeployments() (*appsv1.DeploymentList, error) {
 	return list, nil
 }
 
-func (a *Adapter) newDesiredDeployment() *appsv1.Deployment {
+func (a *Adapter) newDesiredDeployment() (*appsv1.Deployment, error) {
 	reps := int32(1)
-	labels := map[string]string{"app.kubernetes.io/managed-by": "apirator"}
+	labels := Labels
 
 	volumes := a.newVolumes()
 	containers := []v1.Container{a.newMockContainer(), a.newDocContainer()}
-	return &appsv1.Deployment{
+	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      a.resource.GetName(),
 			Namespace: a.resource.GetNamespace(),
@@ -106,6 +104,12 @@ func (a *Adapter) newDesiredDeployment() *appsv1.Deployment {
 			},
 		},
 	}
+
+	if err := controllerutil.SetControllerReference(a.resource, dep, a.scheme); err != nil {
+		return nil, fmt.Errorf("failed to set Deployment %q owner reference: %v", dep.GetName(), err)
+	}
+
+	return dep, nil
 }
 
 func (a *Adapter) newMockContainer() v1.Container {
