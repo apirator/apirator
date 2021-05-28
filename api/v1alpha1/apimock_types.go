@@ -17,12 +17,14 @@ limitations under the License.
 package v1alpha1
 
 import (
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+
+var APIMockLabels = map[string]string{"app.kubernetes.io/managed-by": "apirator"}
 
 const (
 	Provisioned          = "Provisioned"
@@ -62,8 +64,8 @@ type APIMockStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed 
 
 // Service Definition it will "link" the mock with created service
 type ServiceDefinition struct {
-	Port        int            `json:"port,omitempty"`
-	ServiceType v1.ServiceType `json:"serviceType,omitempty"`
+	Port        int                `json:"port,omitempty"`
+	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
 }
 
 //+kubebuilder:object:root=true

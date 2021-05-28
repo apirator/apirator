@@ -10,11 +10,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-const (
-	yamlConfigPath = "/etc/oas/oas.yaml"
-	jsonConfigPath = "/etc/oas/oas.json"
-)
-
 type Adapter struct {
 	logger logr.Logger
 	scheme *runtime.Scheme
