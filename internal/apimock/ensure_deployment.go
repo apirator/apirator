@@ -1,0 +1,221 @@
+package apimock
+
+import (
+	"context"
+	"fmt"
+	"path/filepath"
+	"strconv"
+
+	"github.com/apirator/apirator/internal/inventory"
+	"k8s.io/apimachinery/pkg/api/resource"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	api "github.com/apirator/apirator/api/v1alpha1"
+	"github.com/apirator/apirator/internal/operation"
+	"github.com/apirator/apirator/internal/tracing"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+)
+
+const (
+	docContainerName = "doc"
+	docImageName     = "swaggerapi/swagger-ui:v3.25.0"
+	docPort          = 8080
+	docPortName      = "doc-port"
+
+	mockContainerName   = "mock"
+	mockImageName       = "apirator/mock"
+	mockPort            = 8000
+	mockPortName        = "mock-port"
+	mockVolumeMountName = "oas"
+	mockVolumeMountPath = "/etc/oas/"
+)
+
+func (a *Adapter) EnsureDeployment(ctx context.Context) (*operation.Result, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx)
+	defer span.Finish()
+
+	desired := newDesiredDeployment(a.APIMock)
+	if err := controllerutil.SetControllerReference(a.APIMock, desired, a.svc.scheme); err != nil {
+		span.SetError(err)
+		return nil, fmt.Errorf("failed to set Deployment %q owner reference: %v", desired.GetName(), err)
+	}
+
+	list, err := a.listDeployments()
+	if err != nil {
+		span.SetError(err)
+		return nil, err
+	}
+
+	inv := inventory.ForDeployments(list.Items, []appsv1.Deployment{*desired})
+	err = a.svc.Apply(ctx, inv)
+	if err != nil {
+		return nil, err
+	}
+
+	return operation.ContinueProcessing()
+}
+
+func (a *Adapter) listDeployments() (*appsv1.DeploymentList, error) {
+	opts := []client.ListOption{
+		client.InNamespace(a.APIMock.Namespace),
+		client.MatchingLabels(map[string]string{"app.kubernetes.io/managed-by": "apirator"}),
+	}
+	list := new(appsv1.DeploymentList)
+	if err := a.svc.client.List(context.TODO(), list, opts...); err != nil {
+		return nil, fmt.Errorf("failed to list Deployments: %w", err)
+	}
+	return list, nil
+}
+
+func newDesiredDeployment(apimock *api.APIMock) *appsv1.Deployment {
+	reps := int32(1)
+	labels := map[string]string{"app.kubernetes.io/managed-by": "apirator"}
+
+	volumes := newVolumes(apimock)
+	containers := []v1.Container{newMockContainer(apimock), newDocContainer(apimock)}
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      apimock.GetName(),
+			Namespace: apimock.GetNamespace(),
+			Labels:    labels,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &reps,
+			Selector: &metav1.LabelSelector{MatchLabels: labels},
+			Template: v1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      apimock.GetName(),
+					Namespace: apimock.GetNamespace(),
+					Labels:    labels,
+				},
+				Spec: v1.PodSpec{
+					Containers: containers,
+					Volumes:    volumes,
+				},
+			},
+			Strategy: appsv1.DeploymentStrategy{
+				Type: appsv1.RollingUpdateDeploymentStrategyType,
+				RollingUpdate: &appsv1.RollingUpdateDeployment{
+					MaxUnavailable: func(a intstr.IntOrString) *intstr.IntOrString { return &a }(intstr.FromInt(1)),
+					MaxSurge:       func(a intstr.IntOrString) *intstr.IntOrString { return &a }(intstr.FromInt(1)),
+				},
+			},
+		},
+	}
+}
+
+func newMockContainer(apimock *api.APIMock) v1.Container {
+	var ports []v1.ContainerPort
+	ports = append(ports, v1.ContainerPort{
+		ContainerPort: mockPort,
+		Name:          mockPortName,
+	})
+	cnPort := v1.EnvVar{
+		Name:  "PORT",
+		Value: strconv.Itoa(mockPort),
+	}
+	cnWatch := v1.EnvVar{
+		Name:  "WATCH",
+		Value: strconv.FormatBool(apimock.Spec.Watch),
+	}
+
+	// Handler for probes
+	rh := v1.Handler{
+		HTTPGet: &v1.HTTPGetAction{
+			Path:   "/__health",
+			Port:   intstr.FromInt(8000),
+			Scheme: "HTTP",
+		},
+	}
+
+	// LivenessProbe and Readiness Probe
+	rp := &v1.Probe{
+		Handler:             rh,
+		InitialDelaySeconds: 2,
+		TimeoutSeconds:      1,
+		PeriodSeconds:       3,
+	}
+
+	return v1.Container{
+		Name:    mockContainerName,
+		Image:   mockImageName,
+		Command: []string{"apisprout"},
+		Args: []string{
+			mockVolumeMountPath + "oas.yaml",
+		},
+		VolumeMounts:   newContainerMounts(),
+		Ports:          ports,
+		Resources:      newContainerRequirements(),
+		Env:            []v1.EnvVar{cnPort, cnWatch},
+		ReadinessProbe: rp,
+		LivenessProbe:  rp,
+	}
+}
+
+func newDocContainer(apimock *api.APIMock) v1.Container {
+	var ports []v1.ContainerPort
+	ports = append(ports, v1.ContainerPort{
+		ContainerPort: docPort,
+		Name:          docPortName,
+	})
+	cnPort := v1.EnvVar{
+		Name:  "PORT",
+		Value: strconv.Itoa(docPort),
+	}
+	oasPath := v1.EnvVar{
+		Name:  "SWAGGER_JSON",
+		Value: "/etc/oas/oas.json",
+	}
+	baseUrl := v1.EnvVar{
+		Name:  "BASE_URL",
+		Value: "/" + apimock.GetName() + "/docs",
+	}
+	return v1.Container{
+		Name:         docContainerName,
+		Image:        docImageName,
+		VolumeMounts: newContainerMounts(),
+		Ports:        ports,
+		Resources:    newContainerRequirements(),
+		Env:          []v1.EnvVar{cnPort, oasPath, baseUrl},
+	}
+}
+
+func newContainerMounts() []v1.VolumeMount {
+	return []v1.VolumeMount{{
+		Name:      mockVolumeMountName,
+		MountPath: filepath.Dir(mockVolumeMountPath),
+	}}
+}
+
+func newContainerRequirements() v1.ResourceRequirements {
+	// Configure Requests
+	requests := v1.ResourceList{}
+	requests[v1.ResourceCPU] = resource.MustParse("10m")
+	requests[v1.ResourceMemory] = resource.MustParse("5Mi")
+	// Configure Limits
+	limits := v1.ResourceList{}
+	limits[v1.ResourceCPU] = resource.MustParse("20m")
+	limits[v1.ResourceMemory] = resource.MustParse("10Mi")
+	return v1.ResourceRequirements{
+		Limits:   limits,
+		Requests: requests,
+	}
+}
+
+func newVolumes(apimock *api.APIMock) []v1.Volume {
+	return []v1.Volume{{
+		Name: mockVolumeMountName,
+		VolumeSource: v1.VolumeSource{
+			ConfigMap: &v1.ConfigMapVolumeSource{
+				LocalObjectReference: v1.LocalObjectReference{
+					Name: apimock.GetName(),
+				},
+			},
+		},
+	}}
+}

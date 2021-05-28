@@ -68,6 +68,7 @@ func (r *APIMockReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	result, err := r.handle(ctx,
 		hm.EnsureDefinitionIsValid,
 		hm.EnsureConfigMap,
+		hm.EnsureDeployment,
 	)
 
 	log.V(1).
