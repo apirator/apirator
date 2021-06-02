@@ -93,6 +93,9 @@ test: manifests generate fmt vet ## Run tests.
 
 ##@ Build
 
+inject: ## Code generation for dependency injection container
+	wire ./...
+
 build: generate fmt vet ## Build manager binary.
 	go build -o bin/manager main.go
 
