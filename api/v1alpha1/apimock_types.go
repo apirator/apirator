@@ -18,7 +18,6 @@ package v1alpha1
 
 import (
 	corev1 "k8s.io/api/core/v1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -51,10 +50,10 @@ type APIMockCondition struct {
 	Type APIMockConditionType `json:"type"`
 
 	// Status of the condition, one of True, False, Unknown.
-	Status apiextensionsv1.ConditionStatus `json:"status"`
+	Status corev1.ConditionStatus `json:"status"`
 
-	// The last time this condition was updated.
-	LastUpdateTime metav1.Time `json:"lastUpdateTime,omitempty"`
+	// The last time this condition was probed.
+	LastProbeTime metav1.Time `json:"lastProbeTime,omitempty"`
 
 	// Last time the condition transitioned from one status to another.
 	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
@@ -68,9 +67,6 @@ type APIMockCondition struct {
 
 // APIMockSpec defines the desired state of APIMock
 type APIMockSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
 	Definition        string            `json:"definition,omitempty"`
 	ServiceDefinition ServiceDefinition `json:"serviceDefinition,omitempty"`
 	Watch             bool              `json:"watch,omitempty"`
@@ -91,7 +87,7 @@ type APIMockStatus struct {
 	Conditions []APIMockCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
-// Service Definition it will "link" the mock with created service
+// ServiceDefinition it will "link" the mock with created service
 type ServiceDefinition struct {
 	Port        int                `json:"port,omitempty"`
 	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
@@ -99,7 +95,7 @@ type ServiceDefinition struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-// +kubebuilder:printcolumn:JSONPath=".status.phase",name=Status,type=string
+//+kubebuilder:printcolumn:JSONPath=".status.phase",name=Status,type=string
 
 // APIMock is the Schema for the apimocks API
 type APIMock struct {
