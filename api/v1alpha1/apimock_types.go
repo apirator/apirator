@@ -18,26 +18,52 @@ package v1alpha1
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+type APIMockPhase string
+
+// These are the valid statuses of APIMock.
 const (
-	Provisioned          = "Provisioned"
-	Error                = "Error"
-	InvalidOas           = "InvalidOAS"
-	WaitingAnnotations   = "WaitingAnnotations"
-	IngressTag           = "ingress"
-	NamespaceTag         = "namespace"
-	IngressFinalizerName = "ingress.finalizers.apirator.io"
+	PodPending APIMockPhase = "Pending"
+	PodRunning APIMockPhase = "Running"
+	PodFailed  APIMockPhase = "Failed"
+	PodUnknown APIMockPhase = "Unknown"
 )
 
-type Step struct {
-	Action      string      `json:"action,omitempty"`
-	LastUpdate  metav1.Time `json:"lastUpdate,omitempty"`
-	Description string      `json:"description,omitempty"`
+type APIMockConditionType string
+
+// These are valid conditions of a deployment APIMock.
+const (
+	APIMockProvisioned        APIMockConditionType = "Provisioned"
+	APIMockError              APIMockConditionType = "Error"
+	APIMockInvalidOAS         APIMockConditionType = "InvalidOAS"
+	APIMockWaitingAnnotations APIMockConditionType = "WaitingAnnotations"
+)
+
+// APIMockCondition contains details for the current condition of this APIMock.
+type APIMockCondition struct {
+	// Type of APIMock condition.
+	Type APIMockConditionType `json:"type"`
+
+	// Status of the condition, one of True, False, Unknown.
+	Status apiextensionsv1.ConditionStatus `json:"status"`
+
+	// The last time this condition was updated.
+	LastUpdateTime metav1.Time `json:"lastUpdateTime,omitempty"`
+
+	// Last time the condition transitioned from one status to another.
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
+
+	// The reason for the condition's last transition.
+	Reason string `json:"reason,omitempty"`
+
+	// A human readable message indicating details about the transition.
+	Message string `json:"message,omitempty"`
 }
 
 // APIMockSpec defines the desired state of APIMock
@@ -54,10 +80,15 @@ type APIMockSpec struct {
 }
 
 // APIMockStatus defines the observed state of APIMock
-type APIMockStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-	Phase string `json:"phase,omitempty"`
-	Steps []Step `json:"steps"`
+type APIMockStatus struct {
+	// The phase of a APIMock is a simple, high-level summary of where the APIMock is in its lifecycle.
+	// +optional
+	Phase APIMockPhase `json:"phase,omitempty"`
+
+	// Represents the latest available observations of a APIMock's current state.
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	Conditions []APIMockCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
 // Service Definition it will "link" the mock with created service
