@@ -38,10 +38,10 @@ type APIMockConditionType string
 
 // These are valid conditions of a deployment APIMock.
 const (
-	APIMockProvisioned        APIMockConditionType = "Provisioned"
-	APIMockError              APIMockConditionType = "Error"
-	APIMockInvalidOAS         APIMockConditionType = "InvalidOAS"
-	APIMockWaitingAnnotations APIMockConditionType = "WaitingAnnotations"
+	APIMockProvisioned            APIMockConditionType = "Provisioned"
+	APIMockError                  APIMockConditionType = "Error"
+	APIMockValidOpenAPIDefinition APIMockConditionType = "ValidOpenAPIDefinition"
+	APIMockWaitingAnnotations     APIMockConditionType = "WaitingAnnotations"
 )
 
 // APIMockCondition contains details for the current condition of this APIMock.
@@ -84,7 +84,7 @@ type APIMockStatus struct {
 	// Represents the latest available observations of a APIMock's current state.
 	// +patchMergeKey=type
 	// +patchStrategy=merge
-	Conditions []APIMockCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+	Conditions []*APIMockCondition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
 // ServiceDefinition it will "link" the mock with created service
