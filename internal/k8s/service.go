@@ -30,6 +30,18 @@ func (s *Service) GetAPIMock(ctx context.Context, key client.ObjectKey) (*v1alph
 	return r, nil
 }
 
+func (s *Service) UpdateAPIMockStatus(ctx context.Context, apimock *v1alpha1.APIMock) error {
+	span, ctx := tracing.StartSpanFromContext(ctx)
+	defer span.Finish()
+
+	if err := s.client.Status().Update(ctx, apimock); err != nil {
+		return fmt.Errorf("failed to update APIMock status: %w", err)
+	}
+	log := span.Logger()
+	log.Info("APIMock status updated")
+	return nil
+}
+
 func (s *Service) Apply(ctx context.Context, inv inventory.Object) error {
 	span, ctx := tracing.StartSpanFromContext(ctx)
 	log := span.Logger()
