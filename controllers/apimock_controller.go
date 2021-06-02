@@ -23,7 +23,6 @@ import (
 	"github.com/apirator/apirator/api/v1alpha1"
 	"github.com/apirator/apirator/internal/operation"
 	"github.com/apirator/apirator/internal/tracing"
-	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -32,13 +31,11 @@ import (
 // APIMockReconciler reconciles a APIMock object
 type APIMockReconciler struct {
 	factory AdapterFactory
-	logger  logr.Logger
 }
 
 func NewAPIMockReconciler(factory AdapterFactory) *APIMockReconciler {
 	return &APIMockReconciler{
 		factory: factory,
-		logger:  ctrl.Log.WithName("controllers").WithName("APIMock"),
 	}
 }
 
@@ -59,7 +56,7 @@ func (r *APIMockReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	span, ctx := tracing.StartSpanFromContext(ctx, tracing.WithCustomResource(req.NamespacedName))
 	defer span.Finish()
 
-	log := r.logger.WithValues("trace", span.String())
+	log := span.Logger()
 	log.Info("reconciling")
 
 	adapter, err := r.factory.CreateAPIMockAdapter(ctx, req.NamespacedName)

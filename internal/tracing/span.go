@@ -86,6 +86,10 @@ func (s *Span) Panic(err interface{}) {
 	panic(err)
 }
 
+func (s *Span) LoggerWithName(name string) logr.Logger {
+	return ctrl.Log.WithName(name).WithValues("trace", s.String())
+}
+
 func (s *Span) Logger() logr.Logger {
 	return ctrl.Log.WithValues("trace", s.String())
 }

@@ -1,4 +1,4 @@
-package apimock
+package adapter
 
 import (
 	"context"
@@ -22,7 +22,7 @@ func (a *Adapter) EnsureConfigMap(ctx context.Context) (*operation.Result, error
 }
 
 func (a *Adapter) EnsureDefinitionIsValid(ctx context.Context) (*operation.Result, error) {
-	return a.ValidOpenAPI.Ensure(ctx, a.customresource)
+	return a.OpenAPIDefinition.Ensure(ctx, a.customresource)
 }
 
 func (a *Adapter) EnsureDeployment(ctx context.Context) (*operation.Result, error) {

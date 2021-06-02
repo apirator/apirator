@@ -2,13 +2,12 @@ package tracing
 
 import (
 	"context"
-	"fmt"
-	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
-	"k8s.io/apimachinery/pkg/types"
 	"net/http"
 	"runtime"
 	"strings"
+
+	"github.com/opentracing/opentracing-go"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 var mod string
@@ -57,21 +56,6 @@ func StartSpanFromContext(ctx context.Context, options ...SpanOptionFunc) (*Span
 		span.SetTag("kubernetes.resource", opt.customResource.String())
 	}
 	return &Span{Span: span}, ctx
-}
-
-func StartSpanFromRequest(r *http.Request) (*Span, context.Context) {
-	ctx := ExtractSpanContextFromRequest(r)
-	span, ctxWithSpan := opentracing.StartSpanFromContext(r.Context(), r.Method+" "+r.URL.Path, ext.RPCServerOption(ctx))
-
-	scheme := "http"
-	if r.TLS != nil {
-		scheme = "https"
-	}
-	ext.HTTPUrl.Set(span, fmt.Sprintf("%s://%s%s", scheme, r.Host, r.RequestURI))
-	ext.HTTPMethod.Set(span, r.Method)
-	span.SetTag("http.protocol", r.Proto)
-
-	return &Span{Span: span}, ctxWithSpan
 }
 
 func SpanFromContext(ctx context.Context) *Span {

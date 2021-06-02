@@ -7,23 +7,15 @@ import (
 	"github.com/apirator/apirator/api/v1alpha1"
 	"github.com/apirator/apirator/internal/inventory"
 	"github.com/apirator/apirator/internal/tracing"
-	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type Service struct {
-	client client.Client
-	logger logr.Logger
-}
+type Service struct{ client client.Client }
 
 func NewService(client client.Client) *Service {
-	return &Service{
-		client: client,
-		logger: ctrl.Log.WithName("services").WithName("APIMock"),
-	}
+	return &Service{client: client}
 }
 
 func (s *Service) GetAPIMock(ctx context.Context, key client.ObjectKey) (*v1alpha1.APIMock, error) {
@@ -40,7 +32,7 @@ func (s *Service) GetAPIMock(ctx context.Context, key client.ObjectKey) (*v1alph
 
 func (s *Service) Apply(ctx context.Context, inv inventory.Object) error {
 	span, ctx := tracing.StartSpanFromContext(ctx)
-	log := s.logger.WithValues("trace", span.String())
+	log := span.Logger()
 	defer span.Finish()
 
 	for _, obj := range inv.Create {

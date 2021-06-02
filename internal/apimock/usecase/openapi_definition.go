@@ -9,9 +9,9 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-type ValidOpenAPI struct{}
+type OpenAPIDefinition struct{}
 
-func (v *ValidOpenAPI) Ensure(ctx context.Context, apimock *v1alpha1.APIMock) (*operation.Result, error) {
+func (v *OpenAPIDefinition) Ensure(ctx context.Context, apimock *v1alpha1.APIMock) (*operation.Result, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx)
 	defer span.Finish()
 	log := span.Logger()

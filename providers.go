@@ -2,10 +2,10 @@ package main
 
 import (
 	"github.com/apirator/apirator/controllers"
-	"github.com/apirator/apirator/internal/apimock"
+	"github.com/apirator/apirator/internal/apimock/adapter"
+	"github.com/apirator/apirator/internal/apimock/usecase"
 	"github.com/apirator/apirator/internal/k8s"
 	"github.com/apirator/apirator/internal/resources"
-	"github.com/apirator/apirator/internal/usecase"
 	"github.com/google/wire"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
@@ -18,13 +18,13 @@ var providers = wire.NewSet(
 	extractRestConfig,
 	extractScheme,
 
-	k8s.NewService,
-	apimock.NewAdapterFactory,
+	adapter.NewFactory,
 	controllers.NewAPIMockReconciler,
+	k8s.NewService,
 	resources.NewBuilder,
 	usecase.Providers,
-	wire.Struct(new(apimock.UserCases), "*"),
-	wire.Bind(new(controllers.AdapterFactory), new(*apimock.AdapterFactory)),
+	wire.Bind(new(controllers.AdapterFactory), new(*adapter.Factory)),
+	wire.Struct(new(adapter.UserCases), "*"),
 )
 
 func extractScheme(mgr manager.Manager) *runtime.Scheme {

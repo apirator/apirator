@@ -9,5 +9,5 @@ var Providers = wire.NewSet(
 	wire.Struct(new(Deployment), "*"),
 	wire.Struct(new(Ingress), "*"),
 	wire.Struct(new(Service), "*"),
-	wire.Struct(new(ValidOpenAPI), "*"),
+	wire.Struct(new(OpenAPIDefinition), "*"),
 )
