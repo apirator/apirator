@@ -6,11 +6,14 @@ import (
 	"net/http"
 	"runtime/debug"
 
+	"github.com/go-logr/logr"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
 	"github.com/uber/jaeger-client-go"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
+
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 type (
@@ -81,4 +84,8 @@ func (s *Span) Panic(err interface{}) {
 		"message", err,
 		"stack", string(debug.Stack()))
 	panic(err)
+}
+
+func (s *Span) Logger() logr.Logger {
+	return ctrl.Log.WithValues("trace", s.String())
 }
