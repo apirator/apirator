@@ -8,6 +8,7 @@ package main
 import (
 	"github.com/apirator/apirator/controllers"
 	"github.com/apirator/apirator/internal/apimock/adapter"
+	"github.com/apirator/apirator/internal/apimock/status"
 	"github.com/apirator/apirator/internal/apimock/usecase"
 	"github.com/apirator/apirator/internal/k8s"
 	"github.com/apirator/apirator/internal/resources"
@@ -29,7 +30,11 @@ func newAPIMockReconciler(mgr manager.Manager) (*controllers.APIMockReconciler, 
 		Builder: builder,
 		Service: service,
 	}
-	openAPIDefinition := &usecase.OpenAPIDefinition{}
+	statusManager := &status.Manager{}
+	openAPIDefinition := &usecase.OpenAPIDefinition{
+		Manager: statusManager,
+		Service: service,
+	}
 	deployment := &usecase.Deployment{
 		Builder: builder,
 		Service: service,

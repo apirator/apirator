@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/apirator/apirator/controllers"
 	"github.com/apirator/apirator/internal/apimock/adapter"
+	"github.com/apirator/apirator/internal/apimock/status"
 	"github.com/apirator/apirator/internal/apimock/usecase"
 	"github.com/apirator/apirator/internal/k8s"
 	"github.com/apirator/apirator/internal/resources"
@@ -25,6 +26,7 @@ var providers = wire.NewSet(
 	usecase.Providers,
 	wire.Bind(new(controllers.AdapterFactory), new(*adapter.Factory)),
 	wire.Struct(new(adapter.UserCases), "*"),
+	wire.Struct(new(status.Manager), "*"),
 )
 
 func extractScheme(mgr manager.Manager) *runtime.Scheme {
