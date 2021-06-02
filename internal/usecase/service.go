@@ -1,31 +1,38 @@
-package apimock
+package usecase
 
 import (
 	"context"
 
+	"github.com/apirator/apirator/api/v1alpha1"
 	"github.com/apirator/apirator/internal/inventory"
-	"github.com/apirator/apirator/internal/k8s/services"
+	"github.com/apirator/apirator/internal/k8s"
 	"github.com/apirator/apirator/internal/operation"
+	"github.com/apirator/apirator/internal/resources"
 	"github.com/apirator/apirator/internal/tracing"
 	corev1 "k8s.io/api/core/v1"
 )
 
-func (a *Adapter) EnsureService(ctx context.Context) (*operation.Result, error) {
+type Service struct {
+	*resources.Builder
+	*k8s.Service
+}
+
+func (s *Service) Ensure(ctx context.Context, apimock *v1alpha1.APIMock) (*operation.Result, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx)
 	defer span.Finish()
 
-	desired, err := services.FromAPIMock(a.scheme, a.resource)
+	desired, err := s.ServiceFor(apimock)
 	if err != nil {
 		return nil, span.HandleError(err)
 	}
 
-	list, err := a.svc.ListServices(a.resource)
+	list, err := s.ListServices(apimock)
 	if err != nil {
 		return nil, span.HandleError(err)
 	}
 
 	inv := inventory.ForServices(list.Items, []corev1.Service{*desired})
-	err = a.svc.Apply(ctx, inv)
+	err = s.Apply(ctx, inv)
 	if err != nil {
 		return nil, span.HandleError(err)
 	}

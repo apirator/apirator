@@ -1,4 +1,4 @@
-package configmaps
+package resources
 
 import (
 	"fmt"
@@ -8,8 +8,6 @@ import (
 	yu "github.com/ghodss/yaml"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -18,7 +16,7 @@ const (
 	jsonConfigPath = "/etc/oas/oas.json"
 )
 
-func FromAPIMock(scheme *runtime.Scheme, resource *v1alpha1.APIMock) (*corev1.ConfigMap, error) {
+func (b *Builder) ConfigMapFor(resource *v1alpha1.APIMock) (*corev1.ConfigMap, error) {
 	bJson, err := yu.YAMLToJSON([]byte(resource.Spec.Definition))
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert openapi definition to JSON: %w", err)
@@ -36,7 +34,7 @@ func FromAPIMock(scheme *runtime.Scheme, resource *v1alpha1.APIMock) (*corev1.Co
 		},
 	}
 
-	if err := controllerutil.SetControllerReference(resource, cm, scheme); err != nil {
+	if err := controllerutil.SetControllerReference(resource, cm, b.scheme); err != nil {
 		return nil, fmt.Errorf("failed to set ConfigMap %q owner reference: %v", cm.GetName(), err)
 	}
 

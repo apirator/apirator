@@ -1,4 +1,4 @@
-package deployments
+package resources
 
 import (
 	"fmt"
@@ -10,7 +10,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -30,7 +29,7 @@ const (
 	mockVolumeMountPath = "/etc/oas/"
 )
 
-func FromAPIMock(scheme *runtime.Scheme, resource *v1alpha1.APIMock) (*appsv1.Deployment, error) {
+func (b *Builder) DeploymentFor(resource *v1alpha1.APIMock) (*appsv1.Deployment, error) {
 	reps := int32(1)
 	labels := v1alpha1.APIMockLabels
 
@@ -66,7 +65,7 @@ func FromAPIMock(scheme *runtime.Scheme, resource *v1alpha1.APIMock) (*appsv1.De
 		},
 	}
 
-	if err := controllerutil.SetControllerReference(resource, dep, scheme); err != nil {
+	if err := controllerutil.SetControllerReference(resource, dep, b.scheme); err != nil {
 		return nil, fmt.Errorf("failed to set Deployment %q owner reference: %v", dep.GetName(), err)
 	}
 

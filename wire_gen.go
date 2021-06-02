@@ -8,6 +8,9 @@ package main
 import (
 	"github.com/apirator/apirator/controllers"
 	"github.com/apirator/apirator/internal/apimock"
+	"github.com/apirator/apirator/internal/k8s"
+	"github.com/apirator/apirator/internal/resources"
+	"github.com/apirator/apirator/internal/usecase"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
@@ -19,9 +22,34 @@ import (
 
 func newAPIMockReconciler(mgr manager.Manager) (*controllers.APIMockReconciler, error) {
 	runtimeScheme := extractScheme(mgr)
+	builder := resources.NewBuilder(runtimeScheme)
 	client := extractClient(mgr)
-	service := apimock.NewService(client)
-	adapterFactory := apimock.NewAdapterFactory(runtimeScheme, service)
+	service := k8s.NewService(client)
+	configMap := &usecase.ConfigMap{
+		Builder: builder,
+		Service: service,
+	}
+	validOpenAPI := &usecase.ValidOpenAPI{}
+	deployment := &usecase.Deployment{
+		Builder: builder,
+		Service: service,
+	}
+	ingress := &usecase.Ingress{
+		Builder: builder,
+		Service: service,
+	}
+	usecaseService := &usecase.Service{
+		Builder: builder,
+		Service: service,
+	}
+	userCases := &apimock.UserCases{
+		ConfigMap:    configMap,
+		ValidOpenAPI: validOpenAPI,
+		Deployment:   deployment,
+		Ingress:      ingress,
+		Service:      usecaseService,
+	}
+	adapterFactory := apimock.NewAdapterFactory(userCases, service)
 	apiMockReconciler := controllers.NewAPIMockReconciler(adapterFactory)
 	return apiMockReconciler, nil
 }

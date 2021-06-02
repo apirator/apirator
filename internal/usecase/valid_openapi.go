@@ -1,20 +1,23 @@
-package apimock
+package usecase
 
 import (
 	"context"
 
+	"github.com/apirator/apirator/api/v1alpha1"
 	"github.com/apirator/apirator/internal/operation"
 	"github.com/apirator/apirator/internal/tracing"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-func (a *Adapter) EnsureDefinitionIsValid(ctx context.Context) (*operation.Result, error) {
+type ValidOpenAPI struct{}
+
+func (v *ValidOpenAPI) Ensure(ctx context.Context, apimock *v1alpha1.APIMock) (*operation.Result, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx)
-	log := a.logger.WithValues("trace", span.String())
 	defer span.Finish()
+	log := span.Logger()
 
 	loader := &openapi3.Loader{Context: ctx}
-	doc, err := loader.LoadFromData([]byte(a.resource.Spec.Definition))
+	doc, err := loader.LoadFromData([]byte(apimock.Spec.Definition))
 	if err != nil {
 		return nil, span.HandleError(err)
 	}

@@ -4,25 +4,23 @@ import (
 	"context"
 
 	"github.com/apirator/apirator/controllers"
-	"k8s.io/apimachinery/pkg/runtime"
+	"github.com/apirator/apirator/internal/k8s"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type AdapterFactory struct {
-	scheme *runtime.Scheme
-	svc    *Service
+	userCases *UserCases
+	svc       *k8s.Service
 }
 
-func NewAdapterFactory(scheme *runtime.Scheme, svc *Service) *AdapterFactory {
-	return &AdapterFactory{scheme: scheme, svc: svc}
+func NewAdapterFactory(userCases *UserCases, svc *k8s.Service) *AdapterFactory {
+	return &AdapterFactory{userCases: userCases, svc: svc}
 }
 
 func (a *AdapterFactory) CreateAPIMockAdapter(ctx context.Context, key client.ObjectKey) (controllers.APIMockAdapter, error) {
-	svc := a.svc
-	scheme := a.scheme
-	resource, err := svc.LookupAPIMock(ctx, key)
+	resource, err := a.svc.GetAPIMock(ctx, key)
 	if err != nil {
 		return nil, err
 	}
-	return newAdapter(scheme, svc, resource), err
+	return newAdapter(a.userCases, resource), err
 }
