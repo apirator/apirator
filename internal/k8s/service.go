@@ -1,4 +1,4 @@
-package apimock
+package k8s
 
 import (
 	"context"
@@ -26,7 +26,7 @@ func NewService(client client.Client) *Service {
 	}
 }
 
-func (s *Service) LookupAPIMock(ctx context.Context, key client.ObjectKey) (*v1alpha1.APIMock, error) {
+func (s *Service) GetAPIMock(ctx context.Context, key client.ObjectKey) (*v1alpha1.APIMock, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx)
 	defer span.Finish()
 
