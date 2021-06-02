@@ -64,8 +64,8 @@ func (s *Service) Apply(ctx context.Context, inv inventory.Object) error {
 
 func (s *Service) ListConfigMaps(resource *v1alpha1.APIMock) (*core.ConfigMapList, error) {
 	opts := []client.ListOption{
-		client.InNamespace(resource.Namespace),
-		client.MatchingLabels(v1alpha1.APIMockLabels),
+		client.InNamespace(resource.GetNamespace()),
+		client.MatchingLabels(resource.MatchLabels()),
 	}
 	list := new(core.ConfigMapList)
 	if err := s.client.List(context.TODO(), list, opts...); err != nil {
@@ -77,7 +77,7 @@ func (s *Service) ListConfigMaps(resource *v1alpha1.APIMock) (*core.ConfigMapLis
 func (s *Service) ListDeployments(resource *v1alpha1.APIMock) (*appsv1.DeploymentList, error) {
 	opts := []client.ListOption{
 		client.InNamespace(resource.Namespace),
-		client.MatchingLabels(v1alpha1.APIMockLabels),
+		client.MatchingLabels(resource.MatchLabels()),
 	}
 	list := new(appsv1.DeploymentList)
 	if err := s.client.List(context.TODO(), list, opts...); err != nil {
@@ -88,8 +88,8 @@ func (s *Service) ListDeployments(resource *v1alpha1.APIMock) (*appsv1.Deploymen
 
 func (s *Service) ListServices(resource *v1alpha1.APIMock) (*core.ServiceList, error) {
 	opts := []client.ListOption{
-		client.InNamespace(resource.Namespace),
-		client.MatchingLabels(v1alpha1.APIMockLabels),
+		client.InNamespace(resource.GetNamespace()),
+		client.MatchingLabels(resource.MatchLabels()),
 	}
 	list := new(core.ServiceList)
 	if err := s.client.List(context.TODO(), list, opts...); err != nil {

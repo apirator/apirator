@@ -26,7 +26,7 @@ func (b *Builder) ConfigMapFor(resource *v1alpha1.APIMock) (*corev1.ConfigMap, e
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      resource.GetName(),
 			Namespace: resource.GetNamespace(),
-			Labels:    v1alpha1.APIMockLabels,
+			Labels:    resource.MatchLabels(),
 		},
 		Data: map[string]string{
 			filepath.Base(yamlConfigPath): resource.Spec.Definition,

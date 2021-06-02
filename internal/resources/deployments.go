@@ -31,7 +31,7 @@ const (
 
 func (b *Builder) DeploymentFor(resource *v1alpha1.APIMock) (*appsv1.Deployment, error) {
 	reps := int32(1)
-	labels := v1alpha1.APIMockLabels
+	labels := resource.MatchLabels()
 
 	volumes := newVolumes(resource)
 	containers := []corev1.Container{newMockContainer(resource), newDocContainer(resource)}

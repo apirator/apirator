@@ -21,10 +21,10 @@ func (b *Builder) ServiceFor(resource *v1alpha1.APIMock) (*corev1.Service, error
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      resource.GetName(),
 			Namespace: resource.GetNamespace(),
-			Labels:    v1alpha1.APIMockLabels,
+			Labels:    resource.MatchLabels(),
 		},
 		Spec: corev1.ServiceSpec{
-			Selector: v1alpha1.APIMockLabels,
+			Selector: resource.MatchLabels(),
 			Type:     resource.Spec.ServiceDefinition.ServiceType,
 			Ports: []corev1.ServicePort{
 				{
