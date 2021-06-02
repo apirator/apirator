@@ -51,7 +51,7 @@ spec:
                   type: string
                 type: object
               serviceDefinition:
-                description: Service Definition it will "link" the mock with created
+                description: ServiceDefinition it will "link" the mock with created
                   service
                 properties:
                   port:
@@ -67,24 +67,44 @@ spec:
           status:
             description: APIMockStatus defines the observed state of APIMock
             properties:
-              phase:
-                description: 'Important: Run "make" to regenerate code after modifying
-                  this file'
-                type: string
-              steps:
+              conditions:
+                description: Represents the latest available observations of a APIMock's
+                  current state.
                 items:
+                  description: APIMockCondition contains details for the current condition
+                    of this APIMock.
                   properties:
-                    action:
-                      type: string
-                    description:
-                      type: string
-                    lastUpdate:
+                    lastProbeTime:
+                      description: The last time this condition was probed.
                       format: date-time
                       type: string
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: A human readable message indicating details about
+                        the transition.
+                      type: string
+                    reason:
+                      description: The reason for the condition's last transition.
+                      type: string
+                    status:
+                      description: Status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: Type of APIMock condition.
+                      type: string
+                  required:
+                  - status
+                  - type
                   type: object
                 type: array
-            required:
-            - steps
+              phase:
+                description: The phase of a APIMock is a simple, high-level summary
+                  of where the APIMock is in its lifecycle.
+                type: string
             type: object
         type: object
     served: true
