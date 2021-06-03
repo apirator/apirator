@@ -39,6 +39,9 @@ func newAPIMockReconciler(mgr manager.Manager) (*controllers.APIMockReconciler, 
 		Builder: builder,
 		Service: service,
 	}
+	initializedStatus := &usecase.InitializedStatus{
+		Service: service,
+	}
 	loader := openapi3.NewLoader()
 	validator := openapi.NewValidator(loader)
 	openAPIDefinition := &usecase.OpenAPIDefinition{
@@ -49,16 +52,13 @@ func newAPIMockReconciler(mgr manager.Manager) (*controllers.APIMockReconciler, 
 		Builder: builder,
 		Service: service,
 	}
-	initializedStatus := &usecase.InitializedStatus{
-		Service: service,
-	}
 	userCases := &adapter.UserCases{
 		ConfigMap:         configMap,
 		Deployment:        deployment,
 		Ingress:           ingress,
+		InitializedStatus: initializedStatus,
 		OpenAPIDefinition: openAPIDefinition,
 		Service:           usecaseService,
-		InitializedStatus: initializedStatus,
 	}
 	factory := adapter.NewFactory(userCases, service)
 	apiMockReconciler := controllers.NewAPIMockReconciler(factory)
