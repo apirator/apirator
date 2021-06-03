@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/apirator/apirator/api/v1alpha1/phase"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -24,27 +25,8 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-const (
-	Provisioned          = "Provisioned"
-	Error                = "Error"
-	InvalidOas           = "InvalidOAS"
-	WaitingAnnotations   = "WaitingAnnotations"
-	IngressTag           = "ingress"
-	NamespaceTag         = "namespace"
-	IngressFinalizerName = "ingress.finalizers.apirator.io"
-)
-
-type Step struct {
-	Action      string      `json:"action,omitempty"`
-	LastUpdate  metav1.Time `json:"lastUpdate,omitempty"`
-	Description string      `json:"description,omitempty"`
-}
-
 // APIMockSpec defines the desired state of APIMock
 type APIMockSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
 	Definition        string            `json:"definition,omitempty"`
 	ServiceDefinition ServiceDefinition `json:"serviceDefinition,omitempty"`
 	Watch             bool              `json:"watch,omitempty"`
@@ -54,13 +36,18 @@ type APIMockSpec struct {
 }
 
 // APIMockStatus defines the observed state of APIMock
-type APIMockStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-	Phase string `json:"phase,omitempty"`
-	Steps []Step `json:"steps"`
+type APIMockStatus struct {
+	// The phase of a APIMock is a simple, high-level summary of where the APIMock is in its lifecycle.
+	// +optional
+	Phase phase.Status `json:"phase,omitempty"`
+
+	// Represents the latest available observations of a APIMock's current state.
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
-// Service Definition it will "link" the mock with created service
+// ServiceDefinition it will "link" the mock with created service
 type ServiceDefinition struct {
 	Port        int                `json:"port,omitempty"`
 	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
@@ -68,7 +55,7 @@ type ServiceDefinition struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-// +kubebuilder:printcolumn:JSONPath=".status.phase",name=Status,type=string
+//+kubebuilder:printcolumn:JSONPath=".status.phase",name=Status,type=string
 
 // APIMock is the Schema for the apimocks API
 type APIMock struct {

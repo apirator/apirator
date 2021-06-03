@@ -3,33 +3,37 @@ package usecase
 import (
 	"context"
 
+	"github.com/apirator/apirator/internal/openapi"
+
 	"github.com/apirator/apirator/api/v1alpha1"
+	"github.com/apirator/apirator/internal/k8s"
 	"github.com/apirator/apirator/internal/operation"
 	"github.com/apirator/apirator/internal/tracing"
-	"github.com/getkin/kin-openapi/openapi3"
 )
 
-type OpenAPIDefinition struct{}
+type OpenAPIDefinition struct {
+	*openapi.Validator
+	*k8s.Service
+}
 
 func (v *OpenAPIDefinition) Ensure(ctx context.Context, apimock *v1alpha1.APIMock) (*operation.Result, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx)
 	defer span.Finish()
 	log := span.Logger()
 
-	loader := &openapi3.Loader{Context: ctx}
-	doc, err := loader.LoadFromData([]byte(apimock.Spec.Definition))
+	err := v.Validate(apimock.Spec.Definition)
 	if err != nil {
-		return nil, span.HandleError(err)
-	}
-
-	err = doc.Validate(ctx)
-	if err != nil {
-		log.Info("openapi definition is invalid", "cause", err)
-
-		// TODO: mark as invalid oas
+		if apimock.SetStatusConditionForError(err) {
+			log.Info("invalid OpenAPI definition", "cause", err)
+			return operation.RequeueOnErrorOrStop(v.UpdateAPIMockStatus(ctx, apimock))
+		}
 		return operation.StopProcessing()
 	}
 
-	log.Info("openapi definition is valid")
+	if apimock.SetStatusConditionForValidOpenAPI() {
+		log.Info("valid OpenAPI definition")
+		return operation.RequeueOnErrorOrStop(v.UpdateAPIMockStatus(ctx, apimock))
+	}
+
 	return operation.ContinueProcessing()
 }

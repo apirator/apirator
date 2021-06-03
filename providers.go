@@ -5,7 +5,9 @@ import (
 	"github.com/apirator/apirator/internal/apimock/adapter"
 	"github.com/apirator/apirator/internal/apimock/usecase"
 	"github.com/apirator/apirator/internal/k8s"
+	"github.com/apirator/apirator/internal/openapi"
 	"github.com/apirator/apirator/internal/resources"
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/google/wire"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
@@ -21,6 +23,8 @@ var providers = wire.NewSet(
 	adapter.NewFactory,
 	controllers.NewAPIMockReconciler,
 	k8s.NewService,
+	openapi.NewValidator,
+	openapi3.NewLoader,
 	resources.NewBuilder,
 	usecase.Providers,
 	wire.Bind(new(controllers.AdapterFactory), new(*adapter.Factory)),
