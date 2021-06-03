@@ -38,7 +38,7 @@ func (a *Adapter) EnsureService(ctx context.Context) (*operation.Result, error) 
 }
 
 func (a *Adapter) EnsureIsInitialized(ctx context.Context) (*operation.Result, error) {
-	panic("implement me")
+	return a.InitializedStatus.Ensure(ctx, a.customresource)
 }
 
 func (a *Adapter) EnsureFinalizer(ctx context.Context) (*operation.Result, error) {

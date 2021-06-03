@@ -8,10 +8,11 @@ package main
 import (
 	"github.com/apirator/apirator/controllers"
 	"github.com/apirator/apirator/internal/apimock/adapter"
-	"github.com/apirator/apirator/internal/apimock/status"
 	"github.com/apirator/apirator/internal/apimock/usecase"
 	"github.com/apirator/apirator/internal/k8s"
+	"github.com/apirator/apirator/internal/openapi"
 	"github.com/apirator/apirator/internal/resources"
+	"github.com/getkin/kin-openapi/openapi3"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
@@ -30,11 +31,6 @@ func newAPIMockReconciler(mgr manager.Manager) (*controllers.APIMockReconciler, 
 		Builder: builder,
 		Service: service,
 	}
-	statusManager := &status.Manager{}
-	openAPIDefinition := &usecase.OpenAPIDefinition{
-		Manager: statusManager,
-		Service: service,
-	}
 	deployment := &usecase.Deployment{
 		Builder: builder,
 		Service: service,
@@ -43,16 +39,26 @@ func newAPIMockReconciler(mgr manager.Manager) (*controllers.APIMockReconciler, 
 		Builder: builder,
 		Service: service,
 	}
+	loader := openapi3.NewLoader()
+	validator := openapi.NewValidator(loader)
+	openAPIDefinition := &usecase.OpenAPIDefinition{
+		Validator: validator,
+		Service:   service,
+	}
 	usecaseService := &usecase.Service{
 		Builder: builder,
 		Service: service,
 	}
+	initializedStatus := &usecase.InitializedStatus{
+		Service: service,
+	}
 	userCases := &adapter.UserCases{
 		ConfigMap:         configMap,
-		OpenAPIDefinition: openAPIDefinition,
 		Deployment:        deployment,
 		Ingress:           ingress,
+		OpenAPIDefinition: openAPIDefinition,
 		Service:           usecaseService,
+		InitializedStatus: initializedStatus,
 	}
 	factory := adapter.NewFactory(userCases, service)
 	apiMockReconciler := controllers.NewAPIMockReconciler(factory)
