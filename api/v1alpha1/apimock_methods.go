@@ -2,10 +2,8 @@ package v1alpha1
 
 import (
 	"github.com/apirator/apirator/api/v1alpha1/condition"
-	"github.com/apirator/apirator/api/v1alpha1/phase"
 	"github.com/apirator/apirator/internal/openapi"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func (in *APIMock) MatchLabels() map[string]string {
@@ -15,40 +13,40 @@ func (in *APIMock) MatchLabels() map[string]string {
 	}
 }
 
-func (in *APIMock) SetStatusConditionForError(err error) (updated bool) {
+func (in *APIMock) SetConditionForError(err error) (updated bool) {
 	if _, ok := err.(*openapi.InvalidDefinitionError); ok {
 		message := "OpenAPI definition has " + err.Error()
 		existingCondition := meta.FindStatusCondition(in.Status.Conditions, condition.Validated)
 		updated = existingCondition == nil || existingCondition.Message != message
-		meta.SetStatusCondition(&in.Status.Conditions, condition.NewValidOpenAPIDefinition(metav1.ConditionFalse, message))
+		meta.SetStatusCondition(&in.Status.Conditions, condition.NewOpenAPIValidation(false, message))
 	} else {
 		message := err.Error()
 		existingCondition := meta.FindStatusCondition(in.Status.Conditions, condition.Error)
 		updated = existingCondition == nil || existingCondition.Message != message
-		meta.SetStatusCondition(&in.Status.Conditions, condition.NewError(metav1.ConditionTrue, message))
+		meta.SetStatusCondition(&in.Status.Conditions, condition.NewError(true, message))
 	}
-	updatedStatus := in.UpdateStatus()
-	return updated || updatedStatus
+	return updated
 }
 
-func (in *APIMock) SetStatusConditionForValidOpenAPI() (updated bool) {
+func (in *APIMock) SetConditionForValidOpenAPI() (updated bool) {
 	if meta.IsStatusConditionFalse(in.Status.Conditions, condition.Validated) {
 		message := "OpenAPI definition has been successfully validated."
-		meta.SetStatusCondition(&in.Status.Conditions, condition.NewValidOpenAPIDefinition(metav1.ConditionTrue, message))
+		meta.SetStatusCondition(&in.Status.Conditions, condition.NewOpenAPIValidation(true, message))
 		updated = true
 	}
-	updatedStatus := in.UpdateStatus()
-	return updated || updatedStatus
+	return updated
 }
 
-func (in *APIMock) UpdateStatus() bool {
-	if meta.IsStatusConditionFalse(in.Status.Conditions, condition.Validated) && in.Status.Phase != phase.ConfigError {
-		in.Status.Phase = phase.ConfigError
-		return true
+func (in *APIMock) SetConditionForAvailability(available bool) (updated bool) {
+	if available && !meta.IsStatusConditionTrue(in.Status.Conditions, condition.Available) {
+		message := "Deployment has minimum availability."
+		meta.SetStatusCondition(&in.Status.Conditions, condition.NewAvailable(true, message))
+		updated = true
 	}
-	if meta.IsStatusConditionTrue(in.Status.Conditions, condition.Validated) && in.Status.Phase == phase.ConfigError {
-		in.Status.Phase = phase.Pending
-		return true
+	if !available && !meta.IsStatusConditionFalse(in.Status.Conditions, condition.Available) {
+		message := "Deployment has no minimum availability."
+		meta.SetStatusCondition(&in.Status.Conditions, condition.NewAvailable(false, message))
+		updated = true
 	}
-	return false
+	return updated
 }

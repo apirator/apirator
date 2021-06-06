@@ -7,23 +7,43 @@ const (
 	Provisioned string = "Provisioned"
 	Error              = "Error"
 	Validated          = "Validated"
+	Available          = "Available"
 	Waiting            = "Waiting"
 )
 
-func NewValidOpenAPIDefinition(status metav1.ConditionStatus, message string) metav1.Condition {
+func NewOpenAPIValidation(status bool, message string) metav1.Condition {
 	return metav1.Condition{
 		Type:    Validated,
-		Status:  status,
+		Status:  statusFor(&status),
 		Reason:  "ValidOpenAPIDefinition",
 		Message: message,
 	}
 }
 
-func NewError(status metav1.ConditionStatus, message string) metav1.Condition {
+func NewError(status bool, message string) metav1.Condition {
 	return metav1.Condition{
 		Type:    Error,
-		Status:  status,
+		Status:  statusFor(&status),
 		Reason:  "UnexpectedError",
 		Message: message,
 	}
+}
+
+func NewAvailable(status bool, message string) metav1.Condition {
+	return metav1.Condition{
+		Type:    Available,
+		Status:  statusFor(&status),
+		Reason:  "MinimumReplicasAvailable",
+		Message: message,
+	}
+}
+
+func statusFor(b *bool) metav1.ConditionStatus {
+	if b == nil {
+		return metav1.ConditionUnknown
+	}
+	if *b {
+		return metav1.ConditionTrue
+	}
+	return metav1.ConditionFalse
 }

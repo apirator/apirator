@@ -45,6 +45,6 @@ func (a *Adapter) EnsureFinalizer(ctx context.Context) (*operation.Result, error
 	panic("implement me")
 }
 
-func (a *Adapter) EnsureProvisionedStatus(ctx context.Context) (*operation.Result, error) {
-	panic("implement me")
+func (a *Adapter) EnsureDeploymentAvailability(ctx context.Context) (*operation.Result, error) {
+	return a.DeploymentAvailability.Ensure(ctx, a.customresource)
 }

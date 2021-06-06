@@ -8,7 +8,8 @@ import (
 	"github.com/apirator/apirator/internal/inventory"
 	"github.com/apirator/apirator/internal/tracing"
 	appsv1 "k8s.io/api/apps/v1"
-	core "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -74,19 +75,25 @@ func (s *Service) Apply(ctx context.Context, inv inventory.Object) error {
 	return nil
 }
 
-func (s *Service) ListConfigMaps(resource *v1alpha1.APIMock) (*core.ConfigMapList, error) {
+func (s *Service) ListConfigMaps(ctx context.Context, resource *v1alpha1.APIMock) (*corev1.ConfigMapList, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx)
+	defer span.Finish()
+
 	opts := []client.ListOption{
 		client.InNamespace(resource.GetNamespace()),
 		client.MatchingLabels(resource.MatchLabels()),
 	}
-	list := new(core.ConfigMapList)
+	list := new(corev1.ConfigMapList)
 	if err := s.client.List(context.TODO(), list, opts...); err != nil {
 		return nil, fmt.Errorf("failed to list ConfigMaps: %w", err)
 	}
 	return list, nil
 }
 
-func (s *Service) ListDeployments(resource *v1alpha1.APIMock) (*appsv1.DeploymentList, error) {
+func (s *Service) ListDeployments(ctx context.Context, resource *v1alpha1.APIMock) (*appsv1.DeploymentList, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx)
+	defer span.Finish()
+
 	opts := []client.ListOption{
 		client.InNamespace(resource.Namespace),
 		client.MatchingLabels(resource.MatchLabels()),
@@ -98,14 +105,29 @@ func (s *Service) ListDeployments(resource *v1alpha1.APIMock) (*appsv1.Deploymen
 	return list, nil
 }
 
-func (s *Service) ListServices(resource *v1alpha1.APIMock) (*core.ServiceList, error) {
+func (s *Service) ListServices(ctx context.Context, resource *v1alpha1.APIMock) (*corev1.ServiceList, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx)
+	defer span.Finish()
+
 	opts := []client.ListOption{
 		client.InNamespace(resource.GetNamespace()),
 		client.MatchingLabels(resource.MatchLabels()),
 	}
-	list := new(core.ServiceList)
+	list := new(corev1.ServiceList)
 	if err := s.client.List(context.TODO(), list, opts...); err != nil {
 		return nil, fmt.Errorf("failed to list Services: %w", err)
 	}
 	return list, nil
+}
+
+func (s *Service) GetDeploymentStatus(ctx context.Context, resource *v1alpha1.APIMock) (*DeploymentStatus, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx)
+	defer span.Finish()
+
+	key := types.NamespacedName{Namespace: resource.GetNamespace(), Name: resource.GetName()}
+	dep := &appsv1.Deployment{}
+	if err := s.client.Get(ctx, key, dep); err != nil {
+		return nil, fmt.Errorf("failed to lookup Deployment: %w", err)
+	}
+	return &DeploymentStatus{DeploymentStatus: &dep.Status}, nil
 }
