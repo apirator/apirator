@@ -13,6 +13,8 @@ import (
 	"github.com/apirator/apirator/internal/openapi"
 	"github.com/apirator/apirator/internal/resources"
 	"github.com/getkin/kin-openapi/openapi3"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
@@ -35,6 +37,9 @@ func newAPIMockReconciler(mgr manager.Manager) (*controllers.APIMockReconciler, 
 		Builder: builder,
 		Service: service,
 	}
+	deploymentAvailability := &usecase.DeploymentAvailability{
+		Service: service,
+	}
 	ingress := &usecase.Ingress{
 		Builder: builder,
 		Service: service,
@@ -53,14 +58,25 @@ func newAPIMockReconciler(mgr manager.Manager) (*controllers.APIMockReconciler, 
 		Service: service,
 	}
 	userCases := &adapter.UserCases{
-		ConfigMap:         configMap,
-		Deployment:        deployment,
-		Ingress:           ingress,
-		InitializedStatus: initializedStatus,
-		OpenAPIDefinition: openAPIDefinition,
-		Service:           usecaseService,
+		ConfigMap:              configMap,
+		Deployment:             deployment,
+		DeploymentAvailability: deploymentAvailability,
+		Ingress:                ingress,
+		InitializedStatus:      initializedStatus,
+		OpenAPIDefinition:      openAPIDefinition,
+		Service:                usecaseService,
 	}
 	factory := adapter.NewFactory(userCases, service)
 	apiMockReconciler := controllers.NewAPIMockReconciler(factory)
 	return apiMockReconciler, nil
+}
+
+// wire.go:
+
+func extractScheme(mgr manager.Manager) *runtime.Scheme {
+	return mgr.GetScheme()
+}
+
+func extractClient(mgr manager.Manager) client.Client {
+	return mgr.GetClient()
 }
