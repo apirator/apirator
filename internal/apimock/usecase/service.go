@@ -26,7 +26,7 @@ func (s *Service) Ensure(ctx context.Context, apimock *v1alpha1.APIMock) (*opera
 		return nil, span.HandleError(err)
 	}
 
-	list, err := s.ListServices(apimock)
+	list, err := s.ListServices(ctx, apimock)
 	if err != nil {
 		return nil, span.HandleError(err)
 	}

@@ -26,7 +26,7 @@ func (c *ConfigMap) Ensure(ctx context.Context, apimock *v1alpha1.APIMock) (*ope
 		return nil, span.HandleError(err)
 	}
 
-	list, err := c.ListConfigMaps(apimock)
+	list, err := c.ListConfigMaps(ctx, apimock)
 	if err != nil {
 		return nil, span.HandleError(err)
 	}

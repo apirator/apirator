@@ -26,7 +26,7 @@ func (d *Deployment) Ensure(ctx context.Context, apimock *v1alpha1.APIMock) (*op
 		return nil, span.HandleError(err)
 	}
 
-	list, err := d.ListDeployments(apimock)
+	list, err := d.ListDeployments(ctx, apimock)
 	if err != nil {
 		return nil, span.HandleError(err)
 	}
