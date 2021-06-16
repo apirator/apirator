@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/apirator/apirator/api/v1alpha1"
-	"github.com/apirator/apirator/api/v1alpha1/phase"
 	"github.com/apirator/apirator/internal/k8s"
 	"github.com/apirator/apirator/internal/operation"
 	"github.com/apirator/apirator/internal/tracing"
@@ -26,17 +25,15 @@ func (d *DeploymentAvailability) Ensure(ctx context.Context, apimock *v1alpha1.A
 	}
 
 	if status.HasAvailableCondition() {
-		if apimock.SetConditionForAvailability(true) {
+		if apimock.SetAvailableConditionTrue() {
 			log.Info("mock deployment has minimum availability")
-			apimock.Status.Phase = phase.Running
 			return operation.RequeueOnErrorOrStop(d.UpdateAPIMockStatus(ctx, apimock))
 		}
 		return operation.ContinueProcessing()
 	}
 
-	if apimock.SetConditionForAvailability(false) {
+	if apimock.SetAvailableConditionFalse() {
 		log.Info("mock deployment has no minimum availability")
-		apimock.Status.Phase = phase.Pending
 		return operation.RequeueOnErrorOrStop(d.UpdateAPIMockStatus(ctx, apimock))
 	}
 

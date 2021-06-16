@@ -37,8 +37,8 @@ func (a *Adapter) EnsureService(ctx context.Context) (*operation.Result, error) 
 	return a.Service.Ensure(ctx, a.customresource)
 }
 
-func (a *Adapter) EnsureIsInitialized(ctx context.Context) (*operation.Result, error) {
-	return a.InitializedStatus.Ensure(ctx, a.customresource)
+func (a *Adapter) EnsureStatus(ctx context.Context) (*operation.Result, error) {
+	return a.Status.Ensure(ctx, a.customresource)
 }
 
 func (a *Adapter) EnsureFinalizer(ctx context.Context) (*operation.Result, error) {

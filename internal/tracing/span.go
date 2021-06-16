@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"runtime"
 	"runtime/debug"
+	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/opentracing/opentracing-go"
@@ -91,5 +93,8 @@ func (s *Span) LoggerWithName(name string) logr.Logger {
 }
 
 func (s *Span) Logger() logr.Logger {
-	return ctrl.Log.WithValues("trace", s.String())
+	pc, _, _, _ := runtime.Caller(1)
+	details := runtime.FuncForPC(pc)
+	name := details.Name()
+	return ctrl.Log.WithName(strings.Replace(name, mod, "", 1)).WithValues("trace", s.String())
 }

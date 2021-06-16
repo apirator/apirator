@@ -44,7 +44,7 @@ func newAPIMockReconciler(mgr manager.Manager) (*controllers.APIMockReconciler, 
 		Builder: builder,
 		Service: service,
 	}
-	initializedStatus := &usecase.InitializedStatus{
+	status := &usecase.Status{
 		Service: service,
 	}
 	loader := openapi3.NewLoader()
@@ -62,7 +62,7 @@ func newAPIMockReconciler(mgr manager.Manager) (*controllers.APIMockReconciler, 
 		Deployment:             deployment,
 		DeploymentAvailability: deploymentAvailability,
 		Ingress:                ingress,
-		InitializedStatus:      initializedStatus,
+		Status:                 status,
 		OpenAPIDefinition:      openAPIDefinition,
 		Service:                usecaseService,
 	}

@@ -8,5 +8,4 @@ const (
 	Running Status = "Running"
 	Error   Status = "Error"
 	Failed  Status = "Failed"
-	Unknown Status = "Unknown"
 )

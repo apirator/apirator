@@ -28,12 +28,10 @@ type AdapterFactory interface {
 }
 
 type APIMockAdapter interface {
+	EnsureStatus(ctx context.Context) (*operation.Result, error)
 	EnsureDefinitionIsValid(ctx context.Context) (*operation.Result, error)
-	EnsureIsInitialized(ctx context.Context) (*operation.Result, error)
-	EnsureFinalizer(ctx context.Context) (*operation.Result, error)
 	EnsureConfigMap(ctx context.Context) (*operation.Result, error)
 	EnsureDeployment(ctx context.Context) (*operation.Result, error)
 	EnsureService(ctx context.Context) (*operation.Result, error)
-	EnsureIngress(ctx context.Context) (*operation.Result, error)
 	EnsureDeploymentAvailability(ctx context.Context) (*operation.Result, error)
 }

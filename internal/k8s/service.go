@@ -39,7 +39,7 @@ func (s *Service) UpdateAPIMockStatus(ctx context.Context, apimock *v1alpha1.API
 		return fmt.Errorf("failed to update APIMock status: %w", err)
 	}
 	log := span.Logger()
-	log.Info("APIMock status updated")
+	log.Info("APIMock status updated", "phase", apimock.Status.Phase)
 	return nil
 }
 
