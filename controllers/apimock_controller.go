@@ -56,9 +56,6 @@ func (r *APIMockReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	span, ctx := tracing.StartSpanFromContext(ctx, tracing.WithCustomResource(req.NamespacedName))
 	defer span.Finish()
 
-	log := span.Logger()
-	log.Info("reconciling")
-
 	adapter, err := r.factory.CreateAPIMockAdapter(ctx, req.NamespacedName)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -66,6 +63,9 @@ func (r *APIMockReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 		return r.requeueOnErr(err)
 	}
+
+	log := span.Logger()
+	log.Info("reconciling")
 
 	result, err := r.handle(ctx,
 		adapter.EnsureStatus,
@@ -76,8 +76,7 @@ func (r *APIMockReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		adapter.EnsureDeploymentAvailability,
 	)
 
-	log.V(1).
-		WithValues("error", err != nil, "requeing", result.Requeue, "delay", result.RequeueAfter).
+	log.WithValues("error", err != nil, "requeing", result.Requeue, "delay", result.RequeueAfter).
 		Info("finished reconcile")
 	return result, err
 }
