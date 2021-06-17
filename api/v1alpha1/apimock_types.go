@@ -34,6 +34,7 @@ const (
 type APIMockSpec struct {
 	Definition        string            `json:"definition,omitempty"`
 	ServiceDefinition ServiceDefinition `json:"serviceDefinition,omitempty"`
+	Ingress           *Ingress          `json:"ingress,omitempty"`
 	Watch             bool              `json:"watch,omitempty"`
 	Selector          map[string]string `json:"selector,omitempty"`
 	Host              string            `json:"host,omitempty"`
@@ -56,6 +57,21 @@ type APIMockStatus struct {
 type ServiceDefinition struct {
 	Port        int                `json:"port,omitempty"`
 	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
+}
+
+// Ingress will configure the resource that allows you to access to your mock API
+type Ingress struct {
+	Hostname    string            `json:"hostname"`
+	Path        string            `json:"path"`
+	PathType    *string           `json:"pathType,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+	CertManager bool              `json:"certManager"`
+	TLS         *TLS              `json:"tls,omitempty"`
+}
+
+// TLS enables configuration for the hostname defined at ingress.hostname parameter
+type TLS struct {
+	SecretName string `json:"secretName"`
 }
 
 //+kubebuilder:object:root=true

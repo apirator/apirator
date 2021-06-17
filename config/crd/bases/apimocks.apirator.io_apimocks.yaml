@@ -44,6 +44,36 @@ spec:
                 type: string
               host:
                 type: string
+              ingress:
+                description: Ingress will configure the resource that allows you to
+                  access to your mock API
+                properties:
+                  annotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  certManager:
+                    type: boolean
+                  hostname:
+                    type: string
+                  path:
+                    type: string
+                  pathType:
+                    type: string
+                  tls:
+                    description: TLS enables configuration for the hostname defined
+                      at ingress.hostname parameter
+                    properties:
+                      secretName:
+                        type: string
+                    required:
+                    - secretName
+                    type: object
+                required:
+                - certManager
+                - hostname
+                - path
+                type: object
               initialized:
                 type: boolean
               selector:
