@@ -7,6 +7,7 @@ require (
 	github.com/getkin/kin-openapi v0.62.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v0.3.0
+	github.com/google/go-cmp v0.5.4
 	github.com/google/wire v0.5.0
 	github.com/onsi/ginkgo v1.14.1
 	github.com/onsi/gomega v1.10.2

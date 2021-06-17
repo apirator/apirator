@@ -3,15 +3,10 @@ package inventory
 import (
 	"fmt"
 
+	"github.com/google/go-cmp/cmp"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-type Service struct {
-	Create []corev1.Service
-	Update []corev1.Service
-	Delete []corev1.Service
-}
 
 func ForServices(existing, desired []corev1.Service) Object {
 	var update []client.Object
@@ -20,24 +15,27 @@ func ForServices(existing, desired []corev1.Service) Object {
 
 	for k, v := range mcreate {
 		if t, ok := mdelete[k]; ok {
-			tp := t.DeepCopy()
+			diff := cmp.Diff(v, t, ignore(serviceFields...))
+			if diff != "" {
+				tp := t.DeepCopy()
 
-			if v.Spec.ClusterIP == "" && len(tp.Spec.ClusterIP) > 0 {
-				v.Spec.ClusterIP = tp.Spec.ClusterIP
+				if v.Spec.ClusterIP == "" && len(tp.Spec.ClusterIP) > 0 {
+					v.Spec.ClusterIP = tp.Spec.ClusterIP
+				}
+
+				tp.Spec = v.Spec
+				tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
+
+				for k, v := range v.ObjectMeta.Annotations {
+					tp.ObjectMeta.Annotations[k] = v
+				}
+
+				for k, v := range v.ObjectMeta.Labels {
+					tp.ObjectMeta.Labels[k] = v
+				}
+
+				update = append(update, tp)
 			}
-
-			tp.Spec = v.Spec
-			tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
-
-			for k, v := range v.ObjectMeta.Annotations {
-				tp.ObjectMeta.Annotations[k] = v
-			}
-
-			for k, v := range v.ObjectMeta.Labels {
-				tp.ObjectMeta.Labels[k] = v
-			}
-
-			update = append(update, tp)
 			delete(mcreate, k)
 			delete(mdelete, k)
 		}
@@ -64,4 +62,18 @@ func serviceList(m map[string]corev1.Service) []client.Object {
 		l = append(l, &v)
 	}
 	return l
+}
+
+var serviceFields = []string{
+	"ObjectMeta.Annotations",
+	"ObjectMeta.CreationTimestamp",
+	"ObjectMeta.Generation",
+	"ObjectMeta.ManagedFields",
+	"ObjectMeta.ResourceVersion",
+	"ObjectMeta.SelfLink",
+	"ObjectMeta.UID",
+	"Spec.ClusterIP",
+	"Spec.SessionAffinity",
+	"TypeMeta.APIVersion",
+	"TypeMeta.Kind",
 }

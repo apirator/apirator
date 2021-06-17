@@ -3,16 +3,10 @@ package inventory
 import (
 	"fmt"
 
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
+	"github.com/google/go-cmp/cmp"
 	appsv1 "k8s.io/api/apps/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-type Deployment struct {
-	Create []appsv1.Deployment
-	Update []appsv1.Deployment
-	Delete []appsv1.Deployment
-}
 
 func ForDeployments(existing, desired []appsv1.Deployment) Object {
 	var update []client.Object
@@ -21,24 +15,27 @@ func ForDeployments(existing, desired []appsv1.Deployment) Object {
 
 	for k, v := range mcreate {
 		if t, ok := mdelete[k]; ok {
-			tp := t.DeepCopy()
+			diff := cmp.Diff(v, t, ignore(deploymentFields...))
+			if diff != "" {
+				tp := t.DeepCopy()
 
-			if tp.Spec.Replicas != nil && v.Spec.Replicas == nil {
-				v.Spec.Replicas = tp.Spec.Replicas
+				if tp.Spec.Replicas != nil && v.Spec.Replicas == nil {
+					v.Spec.Replicas = tp.Spec.Replicas
+				}
+
+				tp.Spec = v.Spec
+				tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
+
+				for k, v := range v.ObjectMeta.Annotations {
+					tp.ObjectMeta.Annotations[k] = v
+				}
+
+				for k, v := range v.ObjectMeta.Labels {
+					tp.ObjectMeta.Labels[k] = v
+				}
+
+				update = append(update, tp)
 			}
-
-			tp.Spec = v.Spec
-			tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
-
-			for k, v := range v.ObjectMeta.Annotations {
-				tp.ObjectMeta.Annotations[k] = v
-			}
-
-			for k, v := range v.ObjectMeta.Labels {
-				tp.ObjectMeta.Labels[k] = v
-			}
-
-			update = append(update, tp)
 			delete(mcreate, k)
 			delete(mdelete, k)
 		}
@@ -65,4 +62,32 @@ func deploymentList(m map[string]appsv1.Deployment) []client.Object {
 		l = append(l, &v)
 	}
 	return l
+}
+
+var deploymentFields = []string{
+	"ObjectMeta.Annotations",
+	"ObjectMeta.CreationTimestamp",
+	"ObjectMeta.Generation",
+	"ObjectMeta.ManagedFields",
+	"ObjectMeta.ResourceVersion",
+	"ObjectMeta.SelfLink",
+	"ObjectMeta.UID",
+	"Spec.ProgressDeadlineSeconds",
+	"Spec.RevisionHistoryLimit",
+	"Spec.Template.Spec.Containers.ImagePullPolicy",
+	"Spec.Template.Spec.Containers.LivenessProbe.FailureThreshold",
+	"Spec.Template.Spec.Containers.LivenessProbe.SuccessThreshold",
+	"Spec.Template.Spec.Containers.ReadinessProbe.FailureThreshold",
+	"Spec.Template.Spec.Containers.ReadinessProbe.SuccessThreshold",
+	"Spec.Template.Spec.Containers.TerminationMessagePath",
+	"Spec.Template.Spec.Containers.TerminationMessagePolicy",
+	"Spec.Template.Spec.DNSPolicy",
+	"Spec.Template.Spec.RestartPolicy",
+	"Spec.Template.Spec.SchedulerName",
+	"Spec.Template.Spec.SecurityContext",
+	"Spec.Template.Spec.TerminationGracePeriodSeconds",
+	"Spec.Template.Spec.Volumes.VolumeSource.ConfigMap.DefaultMode",
+	"Status",
+	"TypeMeta.APIVersion",
+	"TypeMeta.Kind",
 }

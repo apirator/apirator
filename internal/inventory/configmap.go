@@ -3,9 +3,9 @@ package inventory
 import (
 	"fmt"
 
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
+	"github.com/google/go-cmp/cmp"
 	core "k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func ForConfigMaps(existing, desired []core.ConfigMap) Object {
@@ -15,21 +15,24 @@ func ForConfigMaps(existing, desired []core.ConfigMap) Object {
 
 	for k, v := range mcreate {
 		if t, ok := mdelete[k]; ok {
-			tp := t.DeepCopy()
+			diff := cmp.Diff(v, t, ignore(configMapFields...))
+			if diff != "" {
+				tp := t.DeepCopy()
 
-			tp.Data = v.Data
-			tp.BinaryData = v.BinaryData
-			tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
+				tp.Data = v.Data
+				tp.BinaryData = v.BinaryData
+				tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
 
-			for k, v := range v.ObjectMeta.Annotations {
-				tp.ObjectMeta.Annotations[k] = v
+				for k, v := range v.ObjectMeta.Annotations {
+					tp.ObjectMeta.Annotations[k] = v
+				}
+
+				for k, v := range v.ObjectMeta.Labels {
+					tp.ObjectMeta.Labels[k] = v
+				}
+
+				update = append(update, tp)
 			}
-
-			for k, v := range v.ObjectMeta.Labels {
-				tp.ObjectMeta.Labels[k] = v
-			}
-
-			update = append(update, tp)
 			delete(mcreate, k)
 			delete(mdelete, k)
 		}
@@ -56,4 +59,14 @@ func configsList(m map[string]core.ConfigMap) []client.Object {
 		l = append(l, &v)
 	}
 	return l
+}
+
+var configMapFields = []string{
+	"TypeMeta.Kind",
+	"TypeMeta.APIVersion",
+	"ObjectMeta.SelfLink",
+	"ObjectMeta.UID",
+	"ObjectMeta.ResourceVersion",
+	"ObjectMeta.CreationTimestamp",
+	"ObjectMeta.ManagedFields",
 }
