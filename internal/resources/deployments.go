@@ -77,6 +77,7 @@ func newMockContainer(resource *v1alpha1.APIMock) corev1.Container {
 	ports = append(ports, corev1.ContainerPort{
 		ContainerPort: mockPort,
 		Name:          mockPortName,
+		Protocol:      corev1.ProtocolTCP,
 	})
 	cnPort := corev1.EnvVar{
 		Name:  "PORT",
@@ -125,6 +126,7 @@ func newDocContainer(resource *v1alpha1.APIMock) corev1.Container {
 	ports = append(ports, corev1.ContainerPort{
 		ContainerPort: docPort,
 		Name:          docPortName,
+		Protocol:      corev1.ProtocolTCP,
 	})
 	cnPort := corev1.EnvVar{
 		Name:  "PORT",
