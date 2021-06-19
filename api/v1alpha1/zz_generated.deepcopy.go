@@ -140,6 +140,11 @@ func (in *Ingress) DeepCopyInto(out *Ingress) {
 			(*out)[key] = val
 		}
 	}
+	if in.CertManager != nil {
+		in, out := &in.CertManager, &out.CertManager
+		*out = new(bool)
+		**out = **in
+	}
 	if in.TLS != nil {
 		in, out := &in.TLS, &out.TLS
 		*out = new(TLS)

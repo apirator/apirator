@@ -68,7 +68,6 @@ spec:
                     - secretName
                     type: object
                 required:
-                - certManager
                 - hostname
                 - path
                 type: object

@@ -69,7 +69,7 @@ type Ingress struct {
 	Path        string            `json:"path"`
 	PathType    *string           `json:"pathType,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
-	CertManager bool              `json:"certManager"`
+	CertManager *bool             `json:"certManager,omitempty"`
 	TLS         *TLS              `json:"tls,omitempty"`
 }
 
