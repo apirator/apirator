@@ -79,7 +79,6 @@ func serviceList(m map[string]corev1.Service) []client.Object {
 }
 
 var serviceFields = []string{
-	"ObjectMeta.Annotations",
 	"ObjectMeta.CreationTimestamp",
 	"ObjectMeta.Generation",
 	"ObjectMeta.ManagedFields",

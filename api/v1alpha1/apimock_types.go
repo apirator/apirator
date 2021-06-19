@@ -32,13 +32,11 @@ const (
 
 // APIMockSpec defines the desired state of APIMock
 type APIMockSpec struct {
-	Definition        string            `json:"definition,omitempty"`
-	ServiceDefinition ServiceDefinition `json:"serviceDefinition,omitempty"`
-	Ingress           *Ingress          `json:"ingress,omitempty"`
-	Watch             bool              `json:"watch,omitempty"`
-	Selector          map[string]string `json:"selector,omitempty"`
-	Host              string            `json:"host,omitempty"`
-	Initialized       bool              `json:"initialized,omitempty"`
+	//+kubebuilder:validation:Required
+	Definition string   `json:"definition,omitempty"`
+	Service    Service  `json:"service,omitempty"`
+	Ingress    *Ingress `json:"ingress,omitempty"`
+	Watch      bool     `json:"watch,omitempty"`
 }
 
 // APIMockStatus defines the observed state of APIMock
@@ -53,10 +51,16 @@ type APIMockStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
-// ServiceDefinition it will "link" the mock with created service
-type ServiceDefinition struct {
-	Port        int                `json:"port,omitempty"`
-	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
+// Service it will "link" the mock with created service
+type Service struct {
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:validation:Maximum=65535
+	Port int `json:"port,omitempty"`
+	//+kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer;ExternalName
+	Type corev1.ServiceType `json:"type,omitempty"`
+	//+kubebuilder:validation:Enum=Local;Cluster
+	ExternalTrafficPolicy corev1.ServiceExternalTrafficPolicyType `json:"externalTrafficPolicy,omitempty"`
+	Annotations           map[string]string                       `json:"annotations,omitempty"`
 }
 
 // Ingress will configure the resource that allows you to access to your mock API
@@ -85,6 +89,18 @@ type APIMock struct {
 
 	Spec   APIMockSpec   `json:"spec,omitempty"`
 	Status APIMockStatus `json:"status,omitempty"`
+}
+
+func DefaultAPIMock() *APIMock {
+	return &APIMock{
+		Spec: APIMockSpec{
+			Service: Service{
+				Port: 8000,
+				Type: corev1.ServiceTypeClusterIP,
+			},
+			Watch: true,
+		},
+	}
 }
 
 //+kubebuilder:object:root=true

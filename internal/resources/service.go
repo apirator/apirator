@@ -33,18 +33,20 @@ const (
 func (b *Builder) ServiceFor(resource *v1alpha1.APIMock) (*corev1.Service, error) {
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      resource.GetName(),
-			Namespace: resource.GetNamespace(),
-			Labels:    resource.MatchLabels(),
+			Name:        resource.GetName(),
+			Namespace:   resource.GetNamespace(),
+			Labels:      resource.MatchLabels(),
+			Annotations: resource.Spec.Service.Annotations,
 		},
 		Spec: corev1.ServiceSpec{
-			Selector: resource.MatchLabels(),
-			Type:     resource.Spec.ServiceDefinition.ServiceType,
+			Selector:              resource.MatchLabels(),
+			Type:                  resource.Spec.Service.Type,
+			ExternalTrafficPolicy: resource.Spec.Service.ExternalTrafficPolicy,
 			Ports: []corev1.ServicePort{
 				{
 					Name:       svcPortName,
 					Protocol:   "TCP",
-					Port:       int32(resource.Spec.ServiceDefinition.Port),
+					Port:       int32(resource.Spec.Service.Port),
 					TargetPort: intstr.FromInt(8000),
 				},
 				{

@@ -16,6 +16,7 @@ package k8s
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/apirator/apirator/api/v1alpha1"
@@ -42,7 +43,23 @@ func (s *Service) GetAPIMock(ctx context.Context, key client.ObjectKey) (*v1alph
 	if err != nil {
 		return nil, fmt.Errorf("failed to lookup resource: %w", err)
 	}
-	return r, nil
+
+	return mergeWithDefaults(r)
+}
+
+func mergeWithDefaults(horus *v1alpha1.APIMock) (*v1alpha1.APIMock, error) {
+	merged := v1alpha1.DefaultAPIMock()
+	jb, err := json.Marshal(horus)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(jb, &merged)
+	if err != nil {
+		return nil, err
+	}
+
+	return merged, nil
 }
 
 func (s *Service) UpdateAPIMockStatus(ctx context.Context, apimock *v1alpha1.APIMock) error {
