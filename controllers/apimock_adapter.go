@@ -33,5 +33,6 @@ type APIMockAdapter interface {
 	EnsureConfigMap(ctx context.Context) (*operation.Result, error)
 	EnsureDeployment(ctx context.Context) (*operation.Result, error)
 	EnsureService(ctx context.Context) (*operation.Result, error)
+	EnsureIngress(ctx context.Context) (*operation.Result, error)
 	EnsureDeploymentAvailability(ctx context.Context) (*operation.Result, error)
 }
