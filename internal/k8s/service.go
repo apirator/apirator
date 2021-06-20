@@ -47,6 +47,27 @@ func (s *Service) GetAPIMock(ctx context.Context, key client.ObjectKey) (*v1alph
 	return mergeWithDefaults(r)
 }
 
+func (s *Service) ListAPIMocks(ctx context.Context, namespace string) (*v1alpha1.APIMockList, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx)
+	defer span.Finish()
+
+	opts := []client.ListOption{
+		client.InNamespace(namespace),
+	}
+	list := new(v1alpha1.APIMockList)
+	if err := s.client.List(context.TODO(), list, opts...); err != nil {
+		return nil, fmt.Errorf("failed to list APIMocks: %w", err)
+	}
+	for i, item := range list.Items {
+		if defaults, err := mergeWithDefaults(&item); err != nil {
+			return nil, fmt.Errorf("failed to merge APIMocks with default values: %w", err)
+		} else {
+			list.Items[i] = *defaults
+		}
+	}
+	return list, nil
+}
+
 func mergeWithDefaults(horus *v1alpha1.APIMock) (*v1alpha1.APIMock, error) {
 	merged := v1alpha1.DefaultAPIMock()
 	jb, err := json.Marshal(horus)
