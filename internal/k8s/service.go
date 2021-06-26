@@ -24,6 +24,7 @@ import (
 	"github.com/apirator/apirator/internal/tracing"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -168,6 +169,21 @@ func (s *Service) ListServices(ctx context.Context, resource *v1alpha1.APIMock) 
 	list := new(corev1.ServiceList)
 	if err := s.client.List(context.TODO(), list, opts...); err != nil {
 		return nil, fmt.Errorf("failed to list Services: %w", err)
+	}
+	return list, nil
+}
+
+func (s *Service) ListIngresses(ctx context.Context, resource *v1alpha1.APIMock) (*networkingv1.IngressList, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx)
+	defer span.Finish()
+
+	opts := []client.ListOption{
+		client.InNamespace(resource.GetNamespace()),
+		client.MatchingLabels(resource.MatchLabels()),
+	}
+	list := new(networkingv1.IngressList)
+	if err := s.client.List(context.TODO(), list, opts...); err != nil {
+		return nil, fmt.Errorf("failed to list Ingresses: %w", err)
 	}
 	return list, nil
 }
