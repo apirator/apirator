@@ -1,12 +1,14 @@
 apiVersion: apimocks.apirator.io/v1alpha1
 kind: APIMock
 metadata:
-  name: apimock-sample
+  name: bets
 spec:
-  serviceDefinition:
-    port: 8000
-    serviceType: ClusterIP
-  watch: true
+  service:
+    port: 7000
+    type: NodePort
+  ingress:
+    hostname: apimock.svc.cluster.local
+    path: /api/players
   definition: |
     openapi: 3.0.0
     servers:
@@ -15,11 +17,10 @@ spec:
           https://apimock.svc.cluster.local
     info:
       title: Bets - Players API
-      x-apirator-mock-path: /api/players
       description: These APIs is part of bets solution. This APIs is responsible to players management.
       version: 0.0.1
       contact:
-        email: tangelodev@gmail.com
+        email: tiago@gmail.com
       license:
         name: Apache 2.0
         url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
