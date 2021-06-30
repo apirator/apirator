@@ -16,6 +16,7 @@ package inventory
 
 import (
 	"fmt"
+	"github.com/google/go-cmp/cmp"
 
 	networkingv1 "k8s.io/api/networking/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -28,20 +29,23 @@ func ForIngresses(existing, desired []networkingv1.Ingress) Object {
 
 	for k, v := range mcreate {
 		if t, ok := mdelete[k]; ok {
-			tp := t.DeepCopy()
+			diff := cmp.Diff(v, t, ignore(ingressFields...))
+			if diff != "" {
+				tp := t.DeepCopy()
 
-			tp.Spec = v.Spec
-			tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
+				tp.Spec = v.Spec
+				tp.ObjectMeta.OwnerReferences = v.ObjectMeta.OwnerReferences
 
-			for k, v := range v.ObjectMeta.Annotations {
-				tp.ObjectMeta.Annotations[k] = v
+				for k, v := range v.ObjectMeta.Annotations {
+					tp.ObjectMeta.Annotations[k] = v
+				}
+
+				for k, v := range v.ObjectMeta.Labels {
+					tp.ObjectMeta.Labels[k] = v
+				}
+
+				update = append(update, tp)
 			}
-
-			for k, v := range v.ObjectMeta.Labels {
-				tp.ObjectMeta.Labels[k] = v
-			}
-
-			update = append(update, tp)
 			delete(mcreate, k)
 			delete(mdelete, k)
 		}
@@ -68,4 +72,16 @@ func ingressList(m map[string]networkingv1.Ingress) []client.Object {
 		l = append(l, &v)
 	}
 	return l
+}
+
+var ingressFields = []string{
+	"ObjectMeta.CreationTimestamp",
+	"ObjectMeta.Generation",
+	"ObjectMeta.ManagedFields",
+	"ObjectMeta.ResourceVersion",
+	"ObjectMeta.SelfLink",
+	"ObjectMeta.UID",
+	"TypeMeta.APIVersion",
+	"TypeMeta.Kind",
+	"Status",
 }

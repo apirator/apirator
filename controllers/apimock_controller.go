@@ -74,6 +74,7 @@ func (r *APIMockReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		adapter.EnsureDeployment,
 		adapter.EnsureService,
 		adapter.EnsureIngress,
+		adapter.EnsureIngressFinalizer,
 		adapter.EnsureDeploymentAvailability,
 	)
 

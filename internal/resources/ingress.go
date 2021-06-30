@@ -23,21 +23,35 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (b *Builder) IngressFor(resources *v1alpha1.APIMockList) (*networkingv1.Ingress, error) {
+func (b *Builder) IngressesFor(resources *v1alpha1.APIMockList) (*networkingv1.IngressList, error) {
+	filtered := make([]v1alpha1.APIMock, 0)
+	for _, r := range resources.Items {
+		exposed := r.Spec.Ingress != nil
+		deleted := r.GetDeletionTimestamp() != nil
+		if exposed && !deleted {
+			filtered = append(filtered, r)
+		}
+	}
+	if len(filtered) == 0 {
+		return &networkingv1.IngressList{}, nil
+	}
 	ing := &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   "apirator",
-			Labels: map[string]string{"app.kubernetes.io/managed-by": "apirator"},
+			Name:        "apirator",
+			Labels:      map[string]string{"app.kubernetes.io/managed-by": "apirator"},
+			Annotations: nil,
 		},
 		Spec: networkingv1.IngressSpec{
-			TLS:   newIngressTLS(resources),
-			Rules: newIngressRules(resources),
+			TLS:   newIngressTLS(filtered),
+			Rules: newIngressRules(filtered),
 		},
 	}
 
-	for _, r := range resources.Items {
+	for _, r := range filtered {
 		if r.Spec.Ingress != nil {
-			ing.Annotations = merge(r.Spec.Ingress.Annotations, ing.Annotations)
+			if len(r.Spec.Ingress.Annotations) > 0 {
+				ing.Annotations = merge(r.Spec.Ingress.Annotations, ing.Annotations)
+			}
 			ing.Namespace = r.GetNamespace()
 			if err := controllerutil.SetOwnerReference(&r, ing, b.scheme); err != nil {
 				return nil, fmt.Errorf("failed to set Service %q owner reference: %v", r.GetName(), err)
@@ -45,24 +59,27 @@ func (b *Builder) IngressFor(resources *v1alpha1.APIMockList) (*networkingv1.Ing
 		}
 	}
 
-	return ing, nil
+	return &networkingv1.IngressList{Items: []networkingv1.Ingress{*ing}}, nil
 }
 
-func newIngressRules(resources *v1alpha1.APIMockList) []networkingv1.IngressRule {
+func newIngressRules(resources []v1alpha1.APIMock) []networkingv1.IngressRule {
 	hosts := mapHosts(resources)
-	tls := make([]networkingv1.IngressRule, 0, len(hosts))
+	rules := make([]networkingv1.IngressRule, 0, len(hosts))
 	for host, backends := range hosts {
-		tls = append(tls, networkingv1.IngressRule{
+		rules = append(rules, networkingv1.IngressRule{
 			Host: host,
 			IngressRuleValue: networkingv1.IngressRuleValue{
 				HTTP: &networkingv1.HTTPIngressRuleValue{Paths: backends},
 			},
 		})
 	}
-	return tls
+	if len(rules) > 0 {
+		return rules
+	}
+	return nil
 }
 
-func newIngressTLS(resources *v1alpha1.APIMockList) []networkingv1.IngressTLS {
+func newIngressTLS(resources []v1alpha1.APIMock) []networkingv1.IngressTLS {
 	secrets := mapTLSSecrets(resources)
 	tls := make([]networkingv1.IngressTLS, 0, len(secrets))
 	for secret, hosts := range secrets {
@@ -71,7 +88,10 @@ func newIngressTLS(resources *v1alpha1.APIMockList) []networkingv1.IngressTLS {
 			SecretName: secret,
 		})
 	}
-	return tls
+	if len(tls) > 0 {
+		return tls
+	}
+	return nil
 }
 
 func newHTTPIngressPath(path, service string, port int) networkingv1.HTTPIngressPath {
@@ -86,9 +106,9 @@ func newHTTPIngressPath(path, service string, port int) networkingv1.HTTPIngress
 	}
 }
 
-func mapTLSSecrets(resources *v1alpha1.APIMockList) map[string][]string {
+func mapTLSSecrets(resources []v1alpha1.APIMock) map[string][]string {
 	tlsSecrets := make(map[string][]string, 0)
-	for _, r := range resources.Items {
+	for _, r := range resources {
 		if r.Spec.Ingress != nil && r.Spec.Ingress.TLS != nil {
 			secretName := r.Spec.Ingress.TLS.SecretName
 			tlsSecrets[secretName] = dedupe(tlsSecrets[secretName], r.Spec.Ingress.Hostname)
@@ -97,9 +117,9 @@ func mapTLSSecrets(resources *v1alpha1.APIMockList) map[string][]string {
 	return tlsSecrets
 }
 
-func mapHosts(resources *v1alpha1.APIMockList) map[string][]networkingv1.HTTPIngressPath {
+func mapHosts(resources []v1alpha1.APIMock) map[string][]networkingv1.HTTPIngressPath {
 	hosts := make(map[string][]networkingv1.HTTPIngressPath, 0)
-	for _, r := range resources.Items {
+	for _, r := range resources {
 		if r.Spec.Ingress != nil {
 			hosts[r.Spec.Ingress.Hostname] = append(
 				hosts[r.Spec.Ingress.Hostname],

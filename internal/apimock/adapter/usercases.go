@@ -21,6 +21,7 @@ type UserCases struct {
 	*usecase.Deployment
 	*usecase.DeploymentAvailability
 	*usecase.Ingress
+	*usecase.IngressFinalizer
 	*usecase.Status
 	*usecase.OpenAPIDefinition
 	*usecase.Service

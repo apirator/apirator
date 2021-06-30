@@ -28,6 +28,7 @@ var Providers = wire.NewSet(
 	wire.Struct(new(usecase.Deployment), "*"),
 	wire.Struct(new(usecase.DeploymentAvailability), "*"),
 	wire.Struct(new(usecase.Ingress), "*"),
+	wire.Struct(new(usecase.IngressFinalizer), "*"),
 	wire.Struct(new(usecase.Status), "*"),
 	wire.Struct(new(usecase.OpenAPIDefinition), "*"),
 	wire.Struct(new(usecase.Service), "*"),

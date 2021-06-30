@@ -55,8 +55,8 @@ func (a *Adapter) EnsureStatus(ctx context.Context) (*operation.Result, error) {
 	return a.Status.Ensure(ctx, a.customresource)
 }
 
-func (a *Adapter) EnsureFinalizer(ctx context.Context) (*operation.Result, error) {
-	panic("implement me")
+func (a *Adapter) EnsureIngressFinalizer(ctx context.Context) (*operation.Result, error) {
+	return a.IngressFinalizer.Ensure(ctx, a.customresource)
 }
 
 func (a *Adapter) EnsureDeploymentAvailability(ctx context.Context) (*operation.Result, error) {

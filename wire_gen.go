@@ -44,6 +44,9 @@ func newAPIMockReconciler(mgr manager.Manager) (*controllers.APIMockReconciler, 
 		Builder: builder,
 		Service: service,
 	}
+	ingressFinalizer := &usecase.IngressFinalizer{
+		Service: service,
+	}
 	status := &usecase.Status{
 		Service: service,
 	}
@@ -62,6 +65,7 @@ func newAPIMockReconciler(mgr manager.Manager) (*controllers.APIMockReconciler, 
 		Deployment:             deployment,
 		DeploymentAvailability: deploymentAvailability,
 		Ingress:                ingress,
+		IngressFinalizer:       ingressFinalizer,
 		Status:                 status,
 		OpenAPIDefinition:      openAPIDefinition,
 		Service:                usecaseService,

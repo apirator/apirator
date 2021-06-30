@@ -84,6 +84,18 @@ func mergeWithDefaults(horus *v1alpha1.APIMock) (*v1alpha1.APIMock, error) {
 	return merged, nil
 }
 
+func (s *Service) UpdateAPIMock(ctx context.Context, apimock *v1alpha1.APIMock) error {
+	span, ctx := tracing.StartSpanFromContext(ctx)
+	defer span.Finish()
+
+	if err := s.client.Update(ctx, apimock); err != nil {
+		return fmt.Errorf("failed to update APIMock: %w", err)
+	}
+	log := span.Logger()
+	log.Info("APIMock updated")
+	return nil
+}
+
 func (s *Service) UpdateAPIMockStatus(ctx context.Context, apimock *v1alpha1.APIMock) error {
 	span, ctx := tracing.StartSpanFromContext(ctx)
 	defer span.Finish()
@@ -179,7 +191,7 @@ func (s *Service) ListIngresses(ctx context.Context, resource *v1alpha1.APIMock)
 
 	opts := []client.ListOption{
 		client.InNamespace(resource.GetNamespace()),
-		client.MatchingLabels(resource.MatchLabels()),
+		client.MatchingLabels(map[string]string{"app.kubernetes.io/managed-by": "apirator"}),
 	}
 	list := new(networkingv1.IngressList)
 	if err := s.client.List(context.TODO(), list, opts...); err != nil {
