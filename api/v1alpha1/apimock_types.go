@@ -17,29 +17,79 @@ limitations under the License.
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+const (
+	APIMockValidated string = "Validated"
+	APIMockAvailable        = "Available"
+)
+
 // APIMockSpec defines the desired state of APIMock
 type APIMockSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of APIMock. Edit apimock_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	//+kubebuilder:validation:Required
+	Definition string   `json:"definition,omitempty"`
+	Service    Service  `json:"service,omitempty"`
+	Ingress    *Ingress `json:"ingress,omitempty"`
+	Watch      bool     `json:"watch,omitempty"`
 }
+
+type Phase string
+
+// These are the valid statuses of APIMock.
+const (
+	Pending Phase = "Pending"
+	Running Phase = "Running"
+	Error   Phase = "Error"
+	Failed  Phase = "Failed"
+)
 
 // APIMockStatus defines the observed state of APIMock
 type APIMockStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// The phase of a APIMock is a simple, high-level summary of where the APIMock is in its lifecycle.
+	// +optional
+	Phase Phase `json:"phase,omitempty"`
+
+	// Represents the latest available observations of a APIMock's current state.
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+}
+
+// Service it will "link" the mock with created service
+type Service struct {
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:validation:Maximum=65535
+	Port int `json:"port,omitempty"`
+	//+kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer;ExternalName
+	Type corev1.ServiceType `json:"type,omitempty"`
+	//+kubebuilder:validation:Enum=Local;Cluster
+	ExternalTrafficPolicy corev1.ServiceExternalTrafficPolicyType `json:"externalTrafficPolicy,omitempty"`
+	Annotations           map[string]string                       `json:"annotations,omitempty"`
+}
+
+// Ingress will configure the resource that allows you to access to your mock API
+type Ingress struct {
+	Hostname    string            `json:"hostname"`
+	Path        string            `json:"path"`
+	PathType    *string           `json:"pathType,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+	CertManager *bool             `json:"certManager,omitempty"`
+	TLS         *TLS              `json:"tls,omitempty"`
+}
+
+// TLS enables configuration for the hostname defined at ingress.hostname parameter
+type TLS struct {
+	SecretName string `json:"secretName"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:JSONPath=".status.phase",name=Status,type=string
 
 // APIMock is the Schema for the apimocks API
 type APIMock struct {
