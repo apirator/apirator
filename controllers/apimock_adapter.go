@@ -22,6 +22,7 @@ import (
 	"github.com/apirator/apirator/internal/reconcile"
 )
 
+// APIMockAdapter have reconcile subroutines that performs actions to keep the desired state of the cluster
 type APIMockAdapter interface {
 	EnsureStatus(ctx context.Context) (*reconcile.OperationResult, error)
 	EnsureDefinitionIsValid(ctx context.Context) (*reconcile.OperationResult, error)
