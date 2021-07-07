@@ -25,5 +25,5 @@ import (
 
 // APIMockReader read APIMock objects
 type APIMockReader interface {
-	GetAPIMock(ctx context.Context, key client.ObjectKey) (v1alpha1.APIMock, error)
+	GetAPIMock(ctx context.Context, key client.ObjectKey) (*v1alpha1.APIMock, error)
 }
