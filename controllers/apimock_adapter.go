@@ -18,18 +18,19 @@ package controllers
 
 import (
 	"context"
+	"github.com/apirator/apirator/api/v1alpha1"
 
 	"github.com/apirator/apirator/internal/reconcile"
 )
 
 // APIMockAdapter have reconcile subroutines that performs actions to keep the desired state of the cluster
 type APIMockAdapter interface {
-	EnsureStatus(ctx context.Context) (*reconcile.OperationResult, error)
-	EnsureDefinitionIsValid(ctx context.Context) (*reconcile.OperationResult, error)
-	EnsureConfigMap(ctx context.Context) (*reconcile.OperationResult, error)
-	EnsureDeployment(ctx context.Context) (*reconcile.OperationResult, error)
-	EnsureService(ctx context.Context) (*reconcile.OperationResult, error)
-	EnsureIngress(ctx context.Context) (*reconcile.OperationResult, error)
-	EnsureIngressFinalizer(ctx context.Context) (*reconcile.OperationResult, error)
-	EnsureDeploymentAvailability(ctx context.Context) (*reconcile.OperationResult, error)
+	EnsureStatus(ctx context.Context, resource *v1alpha1.APIMock) (*reconcile.OperationResult, error)
+	EnsureDefinitionIsValid(ctx context.Context, resource *v1alpha1.APIMock) (*reconcile.OperationResult, error)
+	EnsureConfigMap(ctx context.Context, resource *v1alpha1.APIMock) (*reconcile.OperationResult, error)
+	EnsureDeployment(ctx context.Context, resource *v1alpha1.APIMock) (*reconcile.OperationResult, error)
+	EnsureService(ctx context.Context, resource *v1alpha1.APIMock) (*reconcile.OperationResult, error)
+	EnsureIngress(ctx context.Context, resource *v1alpha1.APIMock) (*reconcile.OperationResult, error)
+	EnsureIngressFinalizer(ctx context.Context, resource *v1alpha1.APIMock) (*reconcile.OperationResult, error)
+	EnsureDeploymentAvailability(ctx context.Context, resource *v1alpha1.APIMock) (*reconcile.OperationResult, error)
 }
