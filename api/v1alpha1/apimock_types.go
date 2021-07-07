@@ -42,10 +42,10 @@ type Phase string
 
 // These are the valid statuses of APIMock.
 const (
-	Pending Phase = "Pending"
-	Running Phase = "Running"
-	Error   Phase = "Error"
-	Failed  Phase = "Failed"
+	PendingPhase Phase = "Pending"
+	RunningPhase Phase = "Running"
+	ErrorPhase   Phase = "Error"
+	FailedPhase  Phase = "Failed"
 )
 
 // APIMockStatus defines the observed state of APIMock
