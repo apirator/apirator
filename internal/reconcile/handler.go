@@ -32,9 +32,9 @@ func NewHandler(operations ...Operation) *Handler {
 	return &Handler{operations: operations}
 }
 
-func (h *Handler) Handle(ctx context.Context, resource *v1alpha1.APIMock) (reconcile.Result, error) {
+func (h *Handler) Handle(ctx context.Context, apimock *v1alpha1.APIMock) (reconcile.Result, error) {
 	for _, op := range h.operations {
-		result, err := op(ctx, resource)
+		result, err := op(ctx, apimock)
 		if err != nil {
 			return RequeueOnErr(err)
 		}

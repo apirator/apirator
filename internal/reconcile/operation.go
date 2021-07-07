@@ -24,7 +24,7 @@ import (
 )
 
 type (
-	Operation       func(ctx context.Context, resource *v1alpha1.APIMock) (*OperationResult, error)
+	Operation       func(ctx context.Context, apimock *v1alpha1.APIMock) (*OperationResult, error)
 	OperationResult struct {
 		RequeueDelay   time.Duration
 		RequeueRequest bool
