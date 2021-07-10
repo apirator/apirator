@@ -23,33 +23,38 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+type (
+	ConfigMapBuilder interface {
+		ConfigMapFor(apimock *v1alpha1.APIMock) (*corev1.ConfigMap, error)
+	}
+	ConfigMapReader interface {
+		ListConfigMaps(ctx context.Context, apimock *v1alpha1.APIMock) (*corev1.ConfigMapList, error)
+	}
+)
+
 type ConfigMap struct {
-	ConfigMapBuilder
-	ConfigMapReader
-	GenericObjectWriter
+	builder ConfigMapBuilder
+	reader  ConfigMapReader
+	writer  GenericObjectWriter
 }
 
-type ConfigMapBuilder interface {
-	ConfigMapFor(apimock *v1alpha1.APIMock) (*corev1.ConfigMap, error)
-}
-
-type ConfigMapReader interface {
-	ListConfigMaps(ctx context.Context, apimock *v1alpha1.APIMock) (*corev1.ConfigMapList, error)
+func NewConfigMap(builder ConfigMapBuilder, reader ConfigMapReader, writer GenericObjectWriter) *ConfigMap {
+	return &ConfigMap{builder: builder, reader: reader, writer: writer}
 }
 
 func (c *ConfigMap) EnsureConfigMap(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
-	desired, err := c.ConfigMapFor(apimock)
+	desired, err := c.builder.ConfigMapFor(apimock)
 	if err != nil {
 		return nil, err
 	}
 
-	list, err := c.ListConfigMaps(ctx, apimock)
+	list, err := c.reader.ListConfigMaps(ctx, apimock)
 	if err != nil {
 		return nil, err
 	}
 
 	inv := inventory.ForConfigMaps(list.Items, []corev1.ConfigMap{*desired})
-	err = c.Apply(ctx, inv)
+	err = c.writer.Apply(ctx, inv)
 	if err != nil {
 		return nil, err
 	}

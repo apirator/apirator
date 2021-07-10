@@ -24,12 +24,16 @@ import (
 
 const ingressFinalizer string = "finalizer.ingress.apirator.io"
 
-type IngressFinalizer struct {
-	APIMockWriter
-}
-
 type APIMockWriter interface {
 	UpdateAPIMock(ctx context.Context, apimock *v1alpha1.APIMock) error
+}
+
+type IngressFinalizer struct {
+	writer APIMockWriter
+}
+
+func NewIngressFinalizer(writer APIMockWriter) *IngressFinalizer {
+	return &IngressFinalizer{writer: writer}
 }
 
 func (i *IngressFinalizer) EnsureIngressFinalizer(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
@@ -37,12 +41,12 @@ func (i *IngressFinalizer) EnsureIngressFinalizer(ctx context.Context, apimock *
 	containsFinalizer := controllerutil.ContainsFinalizer(apimock, ingressFinalizer)
 	if !containsFinalizer && !deleted {
 		controllerutil.AddFinalizer(apimock, ingressFinalizer)
-		return reconcile.RequeueOnErrorOrStop(i.UpdateAPIMock(ctx, apimock))
+		return reconcile.RequeueOnErrorOrStop(i.writer.UpdateAPIMock(ctx, apimock))
 	}
 
 	if deleted {
 		controllerutil.RemoveFinalizer(apimock, ingressFinalizer)
-		return reconcile.RequeueOnErrorOrStop(i.UpdateAPIMock(ctx, apimock))
+		return reconcile.RequeueOnErrorOrStop(i.writer.UpdateAPIMock(ctx, apimock))
 	}
 
 	return reconcile.ContinueProcessing()

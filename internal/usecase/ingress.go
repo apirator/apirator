@@ -24,43 +24,47 @@ import (
 	"github.com/apirator/apirator/internal/inventory"
 )
 
+type (
+	APIMockReader interface {
+		ListAPIMocks(ctx context.Context, namespace string) (*v1alpha1.APIMockList, error)
+	}
+	IngressBuilder interface {
+		IngressesFor(resources *v1alpha1.APIMockList) (*networkingv1.IngressList, error)
+	}
+	IngressReader interface {
+		ListIngresses(ctx context.Context, resource *v1alpha1.APIMock) (*networkingv1.IngressList, error)
+	}
+)
+
 type Ingress struct {
-	APIMockReader
-	GenericObjectWriter
-	IngressBuilder
-	IngressReader
+	builder   IngressBuilder
+	ingreader IngressReader
+	apireader APIMockReader
+	writer    GenericObjectWriter
 }
 
-type APIMockReader interface {
-	ListAPIMocks(ctx context.Context, namespace string) (*v1alpha1.APIMockList, error)
-}
-
-type IngressBuilder interface {
-	IngressesFor(resources *v1alpha1.APIMockList) (*networkingv1.IngressList, error)
-}
-
-type IngressReader interface {
-	ListIngresses(ctx context.Context, resource *v1alpha1.APIMock) (*networkingv1.IngressList, error)
+func NewIngress(builder IngressBuilder, ingreader IngressReader, apireader APIMockReader, writer GenericObjectWriter) *Ingress {
+	return &Ingress{builder: builder, ingreader: ingreader, apireader: apireader, writer: writer}
 }
 
 func (i *Ingress) EnsureIngress(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
-	apimocks, err := i.ListAPIMocks(ctx, apimock.GetNamespace())
+	apimocks, err := i.apireader.ListAPIMocks(ctx, apimock.GetNamespace())
 	if err != nil {
 		return nil, err
 	}
 
-	desired, err := i.IngressesFor(apimocks)
+	desired, err := i.builder.IngressesFor(apimocks)
 	if err != nil {
 		return nil, err
 	}
 
-	list, err := i.ListIngresses(ctx, apimock)
+	list, err := i.ingreader.ListIngresses(ctx, apimock)
 	if err != nil {
 		return nil, err
 	}
 
 	inv := inventory.ForIngresses(list.Items, desired.Items)
-	err = i.Apply(ctx, inv)
+	err = i.writer.Apply(ctx, inv)
 	if err != nil {
 		return nil, err
 	}

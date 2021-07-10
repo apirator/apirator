@@ -23,33 +23,38 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 )
 
+type (
+	DeploymentBuilder interface {
+		DeploymentFor(resource *v1alpha1.APIMock) (*appsv1.Deployment, error)
+	}
+	DeploymentReader interface {
+		ListDeployments(ctx context.Context, resource *v1alpha1.APIMock) (*appsv1.DeploymentList, error)
+	}
+)
+
 type Deployment struct {
-	DeploymentBuilder
-	DeploymentReader
-	GenericObjectWriter
+	builder DeploymentBuilder
+	reader  DeploymentReader
+	writer  GenericObjectWriter
 }
 
-type DeploymentBuilder interface {
-	DeploymentFor(resource *v1alpha1.APIMock) (*appsv1.Deployment, error)
-}
-
-type DeploymentReader interface {
-	ListDeployments(ctx context.Context, resource *v1alpha1.APIMock) (*appsv1.DeploymentList, error)
+func NewDeployment(builder DeploymentBuilder, reader DeploymentReader, writer GenericObjectWriter) *Deployment {
+	return &Deployment{builder: builder, reader: reader, writer: writer}
 }
 
 func (d *Deployment) EnsureDeployment(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
-	desired, err := d.DeploymentFor(apimock)
+	desired, err := d.builder.DeploymentFor(apimock)
 	if err != nil {
 		return nil, err
 	}
 
-	list, err := d.ListDeployments(ctx, apimock)
+	list, err := d.reader.ListDeployments(ctx, apimock)
 	if err != nil {
 		return nil, err
 	}
 
 	inv := inventory.ForDeployments(list.Items, []appsv1.Deployment{*desired})
-	err = d.Apply(ctx, inv)
+	err = d.writer.Apply(ctx, inv)
 	if err != nil {
 		return nil, err
 	}

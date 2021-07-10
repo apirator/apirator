@@ -24,13 +24,17 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-type DeploymentAvailability struct {
-	APIMockStatusWriter
-	DeploymentStatusReader
-}
-
 type DeploymentStatusReader interface {
 	GetDeploymentStatus(ctx context.Context, apimock *v1alpha1.APIMock) (*appsv1.DeploymentStatus, error)
+}
+
+type DeploymentAvailability struct {
+	reader DeploymentStatusReader
+	writer APIMockStatusWriter
+}
+
+func NewDeploymentAvailability(reader DeploymentStatusReader, writer APIMockStatusWriter) *DeploymentAvailability {
+	return &DeploymentAvailability{reader: reader, writer: writer}
 }
 
 func (d *DeploymentAvailability) EnsureDeploymentAvailability(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
@@ -41,20 +45,20 @@ func (d *DeploymentAvailability) EnsureDeploymentAvailability(ctx context.Contex
 
 	if status.HasAvailableCondition() {
 		if apimock.SetAvailableConditionTrue() {
-			return reconcile.RequeueOnErrorOrStop(d.UpdateAPIMockStatus(ctx, apimock))
+			return reconcile.RequeueOnErrorOrStop(d.writer.UpdateAPIMockStatus(ctx, apimock))
 		}
 		return reconcile.ContinueProcessing()
 	}
 
 	if apimock.SetAvailableConditionFalse() {
-		return reconcile.RequeueOnErrorOrStop(d.UpdateAPIMockStatus(ctx, apimock))
+		return reconcile.RequeueOnErrorOrStop(d.writer.UpdateAPIMockStatus(ctx, apimock))
 	}
 
 	return reconcile.RequeueAfter(10 * time.Second)
 }
 
 func (d *DeploymentAvailability) statusOf(ctx context.Context, apimock *v1alpha1.APIMock) (*deployStatus, error) {
-	status, err := d.GetDeploymentStatus(ctx, apimock)
+	status, err := d.reader.GetDeploymentStatus(ctx, apimock)
 	if err != nil {
 		return nil, err
 	}

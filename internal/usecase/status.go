@@ -22,19 +22,23 @@ import (
 )
 
 type Status struct {
-	APIMockStatusWriter
+	writer APIMockStatusWriter
+}
+
+func NewStatus(writer APIMockStatusWriter) *Status {
+	return &Status{writer: writer}
 }
 
 func (v *Status) EnsureStatus(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
 	if apimock.Status.Phase == "" {
 		apimock.Status.Phase = v1alpha1.PendingPhase
-		return reconcile.RequeueWithError(v.UpdateAPIMockStatus(ctx, apimock))
+		return reconcile.RequeueWithError(v.writer.UpdateAPIMockStatus(ctx, apimock))
 	}
 
 	if apimock.IsValidatedConditionFalse() {
 		if apimock.Status.Phase != v1alpha1.ErrorPhase {
 			apimock.Status.Phase = v1alpha1.ErrorPhase
-			return reconcile.RequeueWithError(v.UpdateAPIMockStatus(ctx, apimock))
+			return reconcile.RequeueWithError(v.writer.UpdateAPIMockStatus(ctx, apimock))
 		}
 		return reconcile.ContinueProcessing()
 	}
@@ -42,7 +46,7 @@ func (v *Status) EnsureStatus(ctx context.Context, apimock *v1alpha1.APIMock) (*
 	if apimock.IsAvailableConditionFalse() {
 		if apimock.Status.Phase != v1alpha1.PendingPhase {
 			apimock.Status.Phase = v1alpha1.PendingPhase
-			return reconcile.RequeueWithError(v.UpdateAPIMockStatus(ctx, apimock))
+			return reconcile.RequeueWithError(v.writer.UpdateAPIMockStatus(ctx, apimock))
 		}
 		return reconcile.ContinueProcessing()
 	}
@@ -50,7 +54,7 @@ func (v *Status) EnsureStatus(ctx context.Context, apimock *v1alpha1.APIMock) (*
 	if apimock.IsValidatedConditionTrue() && apimock.IsAvailableConditionTrue() {
 		if apimock.Status.Phase != v1alpha1.RunningPhase {
 			apimock.Status.Phase = v1alpha1.RunningPhase
-			return reconcile.RequeueWithError(v.UpdateAPIMockStatus(ctx, apimock))
+			return reconcile.RequeueWithError(v.writer.UpdateAPIMockStatus(ctx, apimock))
 		}
 		return reconcile.ContinueProcessing()
 	}

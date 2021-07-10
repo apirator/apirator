@@ -21,26 +21,30 @@ import (
 	"github.com/apirator/apirator/internal/reconcile"
 )
 
-type OpenAPIDefinition struct {
-	APIMockStatusWriter
-	OpenAPIValidator
-}
-
 type OpenAPIValidator interface {
 	Validate(definition string) error
 }
 
+type OpenAPIDefinition struct {
+	validator OpenAPIValidator
+	writer    APIMockStatusWriter
+}
+
+func NewOpenAPIDefinition(validator OpenAPIValidator, writer APIMockStatusWriter) *OpenAPIDefinition {
+	return &OpenAPIDefinition{validator: validator, writer: writer}
+}
+
 func (v *OpenAPIDefinition) EnsureDefinitionIsValid(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
-	err := v.Validate(apimock.Spec.Definition)
+	err := v.validator.Validate(apimock.Spec.Definition)
 	if err != nil {
 		if apimock.SetValidatedConditionFalse(err) {
-			return reconcile.RequeueOnErrorOrStop(v.UpdateAPIMockStatus(ctx, apimock))
+			return reconcile.RequeueOnErrorOrStop(v.writer.UpdateAPIMockStatus(ctx, apimock))
 		}
 		return reconcile.StopProcessing()
 	}
 
 	if apimock.SetValidatedConditionTrue() {
-		return reconcile.RequeueOnErrorOrStop(v.UpdateAPIMockStatus(ctx, apimock))
+		return reconcile.RequeueOnErrorOrStop(v.writer.UpdateAPIMockStatus(ctx, apimock))
 	}
 
 	return reconcile.ContinueProcessing()

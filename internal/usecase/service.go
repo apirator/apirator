@@ -23,33 +23,38 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+type (
+	ServiceBuilder interface {
+		ServiceFor(apimock *v1alpha1.APIMock) (*corev1.Service, error)
+	}
+	ServiceReader interface {
+		ListServices(ctx context.Context, resource *v1alpha1.APIMock) (*corev1.ServiceList, error)
+	}
+)
+
 type Service struct {
-	GenericObjectWriter
-	ServiceBuilder
-	ServiceReader
+	builder ServiceBuilder
+	reader  ServiceReader
+	writer  GenericObjectWriter
 }
 
-type ServiceBuilder interface {
-	ServiceFor(apimock *v1alpha1.APIMock) (*corev1.Service, error)
-}
-
-type ServiceReader interface {
-	ListServices(ctx context.Context, resource *v1alpha1.APIMock) (*corev1.ServiceList, error)
+func NewService(builder ServiceBuilder, reader ServiceReader, writer GenericObjectWriter) *Service {
+	return &Service{builder: builder, reader: reader, writer: writer}
 }
 
 func (s *Service) EnsureService(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
-	desired, err := s.ServiceFor(apimock)
+	desired, err := s.builder.ServiceFor(apimock)
 	if err != nil {
 		return nil, err
 	}
 
-	list, err := s.ListServices(ctx, apimock)
+	list, err := s.reader.ListServices(ctx, apimock)
 	if err != nil {
 		return nil, err
 	}
 
 	inv := inventory.ForServices(list.Items, []corev1.Service{*desired})
-	err = s.Apply(ctx, inv)
+	err = s.writer.Apply(ctx, inv)
 	if err != nil {
 		return nil, err
 	}
