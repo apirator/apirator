@@ -37,7 +37,7 @@ type ConfigMapReader interface {
 	ListConfigMaps(ctx context.Context, apimock *v1alpha1.APIMock) (*corev1.ConfigMapList, error)
 }
 
-func (c *ConfigMap) Ensure(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
+func (c *ConfigMap) EnsureConfigMap(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
 	desired, err := c.ConfigMapFor(apimock)
 	if err != nil {
 		return nil, err

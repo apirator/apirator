@@ -32,7 +32,7 @@ type APIMockWriter interface {
 	UpdateAPIMock(ctx context.Context, apimock *v1alpha1.APIMock) error
 }
 
-func (i *IngressFinalizer) Ensure(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
+func (i *IngressFinalizer) EnsureIngressFinalizer(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
 	deleted := apimock.GetDeletionTimestamp() != nil
 	containsFinalizer := controllerutil.ContainsFinalizer(apimock, ingressFinalizer)
 	if !containsFinalizer && !deleted {

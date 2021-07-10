@@ -30,7 +30,7 @@ type OpenAPIValidator interface {
 	Validate(definition string) error
 }
 
-func (v *OpenAPIDefinition) Ensure(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
+func (v *OpenAPIDefinition) EnsureDefinitionIsValid(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
 	err := v.Validate(apimock.Spec.Definition)
 	if err != nil {
 		if apimock.SetValidatedConditionFalse(err) {

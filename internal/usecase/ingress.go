@@ -43,7 +43,7 @@ type IngressReader interface {
 	ListIngresses(ctx context.Context, resource *v1alpha1.APIMock) (*networkingv1.IngressList, error)
 }
 
-func (i *Ingress) Ensure(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
+func (i *Ingress) EnsureIngress(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
 	apimocks, err := i.ListAPIMocks(ctx, apimock.GetNamespace())
 	if err != nil {
 		return nil, err

@@ -33,7 +33,7 @@ type DeploymentStatusReader interface {
 	GetDeploymentStatus(ctx context.Context, apimock *v1alpha1.APIMock) (*appsv1.DeploymentStatus, error)
 }
 
-func (d *DeploymentAvailability) Ensure(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
+func (d *DeploymentAvailability) EnsureDeploymentAvailability(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
 	status, err := d.statusOf(ctx, apimock)
 	if err != nil {
 		return nil, err

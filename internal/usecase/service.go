@@ -37,7 +37,7 @@ type ServiceReader interface {
 	ListServices(ctx context.Context, resource *v1alpha1.APIMock) (*corev1.ServiceList, error)
 }
 
-func (s *Service) Ensure(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
+func (s *Service) EnsureService(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
 	desired, err := s.ServiceFor(apimock)
 	if err != nil {
 		return nil, err

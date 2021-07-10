@@ -37,7 +37,7 @@ type DeploymentReader interface {
 	ListDeployments(ctx context.Context, resource *v1alpha1.APIMock) (*appsv1.DeploymentList, error)
 }
 
-func (d *Deployment) Ensure(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
+func (d *Deployment) EnsureDeployment(ctx context.Context, apimock *v1alpha1.APIMock) (*reconcile.OperationResult, error) {
 	desired, err := d.DeploymentFor(apimock)
 	if err != nil {
 		return nil, err
