@@ -1,4 +1,4 @@
-apiVersion: apimocks.apirator.io/v1alpha1
+apiVersion: apirator.io/v1alpha1
 kind: APIMock
 metadata:
   name: bets
