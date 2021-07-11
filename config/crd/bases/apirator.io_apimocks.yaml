@@ -72,6 +72,9 @@ spec:
                 - path
                 type: object
               service:
+                default:
+                  port: 8000
+                  type: ClusterIP
                 description: Service it will "link" the mock with created service
                 properties:
                   annotations:
@@ -99,6 +102,7 @@ spec:
                     type: string
                 type: object
               watch:
+                default: true
                 type: boolean
             type: object
           status:

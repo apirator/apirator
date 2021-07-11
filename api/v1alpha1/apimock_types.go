@@ -32,10 +32,12 @@ const (
 // APIMockSpec defines the desired state of APIMock
 type APIMockSpec struct {
 	//+kubebuilder:validation:Required
-	Definition string   `json:"definition,omitempty"`
-	Service    Service  `json:"service,omitempty"`
-	Ingress    *Ingress `json:"ingress,omitempty"`
-	Watch      bool     `json:"watch,omitempty"`
+	Definition string `json:"definition,omitempty"`
+	//+kubebuilder:default:={port: 8000,type: ClusterIP}
+	Service Service  `json:"service,omitempty"`
+	Ingress *Ingress `json:"ingress,omitempty"`
+	//+kubebuilder:default:=true
+	Watch bool `json:"watch,omitempty"`
 }
 
 type Phase string
