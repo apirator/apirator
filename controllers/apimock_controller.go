@@ -34,6 +34,7 @@ type APIMockReconciler struct {
 //+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apirator.io,resources=apimocks,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apirator.io,resources=apimocks/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=apirator.io,resources=apimocks/finalizers,verbs=update
