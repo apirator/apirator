@@ -16,11 +16,12 @@ package objects
 
 import (
 	"github.com/apirator/apirator/api/v1alpha1"
-	networkingv1 "k8s.io/api/networking/v1"
+	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func (b *Builder) IngressesFor(apimocks *v1alpha1.APIMockList) (*networkingv1.IngressList, error) {
+func (b *Builder) IngressesFor(apimocks *v1alpha1.APIMockList) (*networkingv1beta1.IngressList, error) {
 	filtered := make([]v1alpha1.APIMock, 0)
 	for _, r := range apimocks.Items {
 		exposed := r.Spec.Ingress != nil
@@ -30,15 +31,15 @@ func (b *Builder) IngressesFor(apimocks *v1alpha1.APIMockList) (*networkingv1.In
 		}
 	}
 	if len(filtered) == 0 {
-		return &networkingv1.IngressList{}, nil
+		return &networkingv1beta1.IngressList{}, nil
 	}
-	ing := &networkingv1.Ingress{
+	ing := &networkingv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        "apirator",
 			Labels:      map[string]string{"app.kubernetes.io/managed-by": "apirator"},
 			Annotations: nil,
 		},
-		Spec: networkingv1.IngressSpec{
+		Spec: networkingv1beta1.IngressSpec{
 			TLS:   newIngressTLS(filtered),
 			Rules: newIngressRules(filtered),
 		},
@@ -56,17 +57,17 @@ func (b *Builder) IngressesFor(apimocks *v1alpha1.APIMockList) (*networkingv1.In
 		}
 	}
 
-	return &networkingv1.IngressList{Items: []networkingv1.Ingress{*ing}}, nil
+	return &networkingv1beta1.IngressList{Items: []networkingv1beta1.Ingress{*ing}}, nil
 }
 
-func newIngressRules(apimocks []v1alpha1.APIMock) []networkingv1.IngressRule {
+func newIngressRules(apimocks []v1alpha1.APIMock) []networkingv1beta1.IngressRule {
 	hosts := mapHosts(apimocks)
-	rules := make([]networkingv1.IngressRule, 0, len(hosts))
+	rules := make([]networkingv1beta1.IngressRule, 0, len(hosts))
 	for host, backends := range hosts {
-		rules = append(rules, networkingv1.IngressRule{
+		rules = append(rules, networkingv1beta1.IngressRule{
 			Host: host,
-			IngressRuleValue: networkingv1.IngressRuleValue{
-				HTTP: &networkingv1.HTTPIngressRuleValue{Paths: backends},
+			IngressRuleValue: networkingv1beta1.IngressRuleValue{
+				HTTP: &networkingv1beta1.HTTPIngressRuleValue{Paths: backends},
 			},
 		})
 	}
@@ -76,11 +77,11 @@ func newIngressRules(apimocks []v1alpha1.APIMock) []networkingv1.IngressRule {
 	return nil
 }
 
-func newIngressTLS(apimocks []v1alpha1.APIMock) []networkingv1.IngressTLS {
+func newIngressTLS(apimocks []v1alpha1.APIMock) []networkingv1beta1.IngressTLS {
 	secrets := mapTLSSecrets(apimocks)
-	tls := make([]networkingv1.IngressTLS, 0, len(secrets))
+	tls := make([]networkingv1beta1.IngressTLS, 0, len(secrets))
 	for secret, hosts := range secrets {
-		tls = append(tls, networkingv1.IngressTLS{
+		tls = append(tls, networkingv1beta1.IngressTLS{
 			Hosts:      hosts,
 			SecretName: secret,
 		})
@@ -91,15 +92,15 @@ func newIngressTLS(apimocks []v1alpha1.APIMock) []networkingv1.IngressTLS {
 	return nil
 }
 
-func newHTTPIngressPath(path, service string, port int) networkingv1.HTTPIngressPath {
-	prefix := networkingv1.PathTypePrefix
-	return networkingv1.HTTPIngressPath{
+func newHTTPIngressPath(path, service string, port int) networkingv1beta1.HTTPIngressPath {
+	prefix := networkingv1beta1.PathTypePrefix
+	return networkingv1beta1.HTTPIngressPath{
 		Path:     path,
 		PathType: &prefix,
-		Backend: networkingv1.IngressBackend{Service: &networkingv1.IngressServiceBackend{
-			Name: service,
-			Port: networkingv1.ServiceBackendPort{Number: int32(port)},
-		}},
+		Backend: networkingv1beta1.IngressBackend{
+			ServiceName: service,
+			ServicePort: intstr.FromInt(port),
+		},
 	}
 }
 
@@ -114,8 +115,8 @@ func mapTLSSecrets(apimocks []v1alpha1.APIMock) map[string][]string {
 	return tlsSecrets
 }
 
-func mapHosts(apimocks []v1alpha1.APIMock) map[string][]networkingv1.HTTPIngressPath {
-	hosts := make(map[string][]networkingv1.HTTPIngressPath, 0)
+func mapHosts(apimocks []v1alpha1.APIMock) map[string][]networkingv1beta1.HTTPIngressPath {
+	hosts := make(map[string][]networkingv1beta1.HTTPIngressPath, 0)
 	for _, r := range apimocks {
 		if r.Spec.Ingress != nil {
 			hosts[r.Spec.Ingress.Hostname] = append(

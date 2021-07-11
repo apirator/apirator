@@ -18,11 +18,11 @@ import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 
-	networkingv1 "k8s.io/api/networking/v1"
+	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func ForIngresses(existing, desired []networkingv1.Ingress) Object {
+func ForIngresses(existing, desired []networkingv1beta1.Ingress) Object {
 	var update []client.Object
 	mcreate := ingressMap(desired)
 	mdelete := ingressMap(existing)
@@ -58,15 +58,15 @@ func ForIngresses(existing, desired []networkingv1.Ingress) Object {
 	}
 }
 
-func ingressMap(deps []networkingv1.Ingress) map[string]networkingv1.Ingress {
-	m := map[string]networkingv1.Ingress{}
+func ingressMap(deps []networkingv1beta1.Ingress) map[string]networkingv1beta1.Ingress {
+	m := map[string]networkingv1beta1.Ingress{}
 	for _, d := range deps {
 		m[fmt.Sprintf("%s.%s", d.Namespace, d.Name)] = d
 	}
 	return m
 }
 
-func ingressList(m map[string]networkingv1.Ingress) []client.Object {
+func ingressList(m map[string]networkingv1beta1.Ingress) []client.Object {
 	var l []client.Object
 	for _, v := range m {
 		l = append(l, &v)

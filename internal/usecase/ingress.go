@@ -18,7 +18,7 @@ import (
 	"context"
 
 	"github.com/apirator/apirator/internal/reconcile"
-	networkingv1 "k8s.io/api/networking/v1"
+	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 
 	"github.com/apirator/apirator/api/v1alpha1"
 	"github.com/apirator/apirator/internal/inventory"
@@ -29,10 +29,10 @@ type (
 		ListAPIMocks(ctx context.Context, namespace string) (*v1alpha1.APIMockList, error)
 	}
 	IngressBuilder interface {
-		IngressesFor(apimocks *v1alpha1.APIMockList) (*networkingv1.IngressList, error)
+		IngressesFor(apimocks *v1alpha1.APIMockList) (*networkingv1beta1.IngressList, error)
 	}
 	IngressReader interface {
-		ListIngresses(ctx context.Context, apimock *v1alpha1.APIMock) (*networkingv1.IngressList, error)
+		ListIngresses(ctx context.Context, apimock *v1alpha1.APIMock) (*networkingv1beta1.IngressList, error)
 	}
 )
 
