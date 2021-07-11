@@ -3,10 +3,10 @@ package client
 import (
 	"context"
 	"fmt"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/apirator/apirator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func (k *Kubernetes) ListConfigMaps(ctx context.Context, apimock *v1alpha1.APIMock) (*corev1.ConfigMapList, error) {

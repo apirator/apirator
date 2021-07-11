@@ -3,11 +3,11 @@ package client
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/apirator/apirator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func (k *Kubernetes) GetDeploymentStatus(ctx context.Context, resource *v1alpha1.APIMock) (*appsv1.DeploymentStatus, error) {
