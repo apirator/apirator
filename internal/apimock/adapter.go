@@ -30,3 +30,21 @@ type Adapter struct {
 	*usecase.Service
 	*usecase.Status
 }
+
+func NewAdapter(
+	cmBuilder usecase.ConfigMapBuilder, cmReader usecase.ConfigMapReader, goWriter usecase.GenericObjectWriter,
+	depBuilder usecase.DeploymentBuilder, depReader usecase.DeploymentReader, depStatusReader usecase.DeploymentStatusReader,
+	apiStatusWriter usecase.APIMockStatusWriter, ingBuilder usecase.IngressBuilder, ingReader usecase.IngressReader,
+	apiReader usecase.APIMockReader, apiWriter usecase.APIMockWriter, apiValidator usecase.OpenAPIValidator,
+	svcBuilder usecase.ServiceBuilder, svcReader usecase.ServiceReader) *Adapter {
+	return &Adapter{
+		ConfigMap:              usecase.NewConfigMap(cmBuilder, cmReader, goWriter),
+		Deployment:             usecase.NewDeployment(depBuilder, depReader, goWriter),
+		DeploymentAvailability: usecase.NewDeploymentAvailability(depStatusReader, apiStatusWriter),
+		Ingress:                usecase.NewIngress(ingBuilder, ingReader, apiReader, goWriter),
+		IngressFinalizer:       usecase.NewIngressFinalizer(apiWriter),
+		OpenAPIDefinition:      usecase.NewOpenAPIDefinition(apiValidator, apiStatusWriter),
+		Service:                usecase.NewService(svcBuilder, svcReader, goWriter),
+		Status:                 usecase.NewStatus(apiStatusWriter),
+	}
+}
