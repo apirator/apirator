@@ -28,7 +28,7 @@ type (
 		DeploymentFor(resource *v1alpha1.APIMock) (*appsv1.Deployment, error)
 	}
 	DeploymentReader interface {
-		ListDeployments(ctx context.Context, resource *v1alpha1.APIMock) (*appsv1.DeploymentList, error)
+		ListDeployments(ctx context.Context, apimock *v1alpha1.APIMock) (*appsv1.DeploymentList, error)
 	}
 )
 

@@ -28,7 +28,7 @@ type (
 		ServiceFor(apimock *v1alpha1.APIMock) (*corev1.Service, error)
 	}
 	ServiceReader interface {
-		ListServices(ctx context.Context, resource *v1alpha1.APIMock) (*corev1.ServiceList, error)
+		ListServices(ctx context.Context, apimock *v1alpha1.APIMock) (*corev1.ServiceList, error)
 	}
 )
 

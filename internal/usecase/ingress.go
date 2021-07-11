@@ -29,10 +29,10 @@ type (
 		ListAPIMocks(ctx context.Context, namespace string) (*v1alpha1.APIMockList, error)
 	}
 	IngressBuilder interface {
-		IngressesFor(resources *v1alpha1.APIMockList) (*networkingv1.IngressList, error)
+		IngressesFor(apimocks *v1alpha1.APIMockList) (*networkingv1.IngressList, error)
 	}
 	IngressReader interface {
-		ListIngresses(ctx context.Context, resource *v1alpha1.APIMock) (*networkingv1.IngressList, error)
+		ListIngresses(ctx context.Context, apimock *v1alpha1.APIMock) (*networkingv1.IngressList, error)
 	}
 )
 
