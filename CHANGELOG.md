@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+-   Support for OpenAPI 3.0 [Components Section](https://swagger.io/docs/specification/components/)
+
 ## [v1.0.0] - 2021-07-20
 
 ### Added
