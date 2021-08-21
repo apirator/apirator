@@ -3,7 +3,7 @@ module github.com/apirator/apirator
 go 1.16
 
 require (
-	github.com/getkin/kin-openapi v0.66.0
+	github.com/getkin/kin-openapi v0.74.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-cmp v0.5.2
 	github.com/onsi/ginkgo v1.14.1
