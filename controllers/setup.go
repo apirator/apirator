@@ -17,14 +17,7 @@ limitations under the License.
 package controllers
 
 import (
-	"github.com/apirator/apirator/internal/apimock"
-	internalclient "github.com/apirator/apirator/internal/client"
-	"github.com/apirator/apirator/internal/objects"
-	"github.com/apirator/apirator/internal/openapi"
-	"github.com/getkin/kin-openapi/openapi3"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func SetupWithManager(mgr ctrl.Manager) error {
@@ -33,13 +26,4 @@ func SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 	return r.SetupWithManager(mgr)
-}
-
-func newAPIMockReconciler(clientClient client.Client, scheme *runtime.Scheme) (*APIMockReconciler, error) {
-	k8s := &internalclient.Kubernetes{Client: clientClient}
-	builder := objects.NewBuilder(scheme)
-	loader := openapi3.NewLoader()
-	validator := openapi.NewValidator(loader)
-	adapter := apimock.NewAdapter(builder, k8s, k8s, builder, k8s, k8s, k8s, builder, k8s, k8s, k8s, validator, builder, k8s)
-	return &APIMockReconciler{APIMockReader: k8s, APIMockAdapter: adapter}, nil
 }
